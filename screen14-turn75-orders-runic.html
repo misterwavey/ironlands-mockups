@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Turn 75 Orders (Runic)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=Jost:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #1a1815;
+    color: #d4cfc5;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-x: hidden;
+    background-image:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"),
+      linear-gradient(180deg, #1a1815 0%, #0f0e0c 100%);
+    background-blend-mode: overlay, normal;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 24px 8px; font-size: 12px; font-weight: 600; color: #6a6560;
+  }
+  .status-bar .time { font-size: 15px; color: #a09a90; }
+
+  /* Header — carved stone */
+  .header {
+    padding: 20px 24px 18px;
+    background: linear-gradient(180deg, #252320 0%, #1a1815 100%);
+    border-bottom: 3px solid #3a3530;
+    position: relative;
+  }
+  .header::before {
+    content: 'ᚦᚢᚱᚾ';
+    position: absolute;
+    top: 8px;
+    right: 20px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 11px;
+    color: #4a4540;
+    letter-spacing: 3px;
+    opacity: 0.6;
+  }
+  .turn-label {
+    font-family: 'Cinzel', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #c9b896;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 1px;
+  }
+  .turn-context {
+    font-size: 13px;
+    color: #8a8580;
+    margin-top: 4px;
+  }
+  .deadline-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 6px 14px;
+    background: #2a2520;
+    border: 1px solid #4a4540;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #a89a76;
+  }
+
+  .content { padding: 20px 22px; }
+
+  /* Section with runic border */
+  .section {
+    margin-bottom: 24px;
+    background: linear-gradient(180deg, #201e1b 0%, #1a1815 100%);
+    border: 1px solid #3a3530;
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+  }
+  .section::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #5a5040, transparent);
+  }
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #a89a76;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::before {
+    content: '◆';
+    color: #6a5a40;
+    font-size: 10px;
+  }
+
+  /* Resources — stone tablets */
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .resource-stone {
+    background: linear-gradient(180deg, #252320 0%, #1e1c19 100%);
+    border: 1px solid #3a3530;
+    border-radius: 6px;
+    padding: 12px 8px;
+    text-align: center;
+    position: relative;
+  }
+  .resource-stone::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #4a4540, transparent);
+  }
+  .resource-stone.warn { border-color: #6a4030; }
+  .resource-stone.warn::after { background: linear-gradient(90deg, transparent, #8a5040, transparent); }
+  .resource-emoji { font-size: 18px; margin-bottom: 4px; }
+  .resource-num {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #d4cfc5;
+  }
+  .resource-num.warn { color: #c98a6a; }
+  .resource-lbl {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6a6560;
+    margin-top: 2px;
+  }
+
+  /* Allocation — warrior bands */
+  .alloc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .alloc-band {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    background: #161513;
+    border: 1px solid #2a2520;
+    border-left: 4px solid;
+    border-radius: 0 6px 6px 0;
+  }
+  .alloc-band.gather { border-left-color: #5a8a4a; }
+  .alloc-band.craft { border-left-color: #8a7a4a; }
+  .alloc-band.scout { border-left-color: #4a6a8a; }
+  .alloc-band.warrior { border-left-color: #8a4a4a; }
+  .alloc-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #252320;
+    border: 2px solid #3a3530;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .alloc-band.gather .alloc-icon { border-color: #4a6a3a; }
+  .alloc-band.craft .alloc-icon { border-color: #6a5a3a; }
+  .alloc-band.scout .alloc-icon { border-color: #3a5a7a; }
+  .alloc-band.warrior .alloc-icon { border-color: #6a3a3a; }
+  .alloc-info { flex: 1; }
+  .alloc-name {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #c9b896;
+  }
+  .alloc-note {
+    font-size: 12px;
+    color: #6a6560;
+  }
+  .alloc-count {
+    text-align: right;
+  }
+  .alloc-num {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #d4cfc5;
+    line-height: 1;
+  }
+  .alloc-pct {
+    font-size: 11px;
+    color: #5a5040;
+  }
+
+  /* Projection — prophecy stone */
+  .prophecy-stone {
+    background: #161513;
+    border: 1px solid #2a2520;
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+  }
+  .prophecy-stone::before {
+    content: 'ᚠ';
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 24px;
+    color: #3a3530;
+  }
+  .prophecy-title {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: #8a8580;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+  .prophecy-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #252320;
+  }
+  .prophecy-line:last-child { border: none; }
+  .prophecy-rune {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #252320;
+    border: 1px solid #3a3530;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .prophecy-text {
+    flex: 1;
+    font-size: 14px;
+    color: #a09a90;
+  }
+  .prophecy-val {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .prophecy-val.good { color: #7aa66a; }
+  .prophecy-val.bad { color: #b06a5a; }
+  .prophecy-val.neutral { color: #8a9aaa; }
+
+  /* Movement — path stones */
+  .path-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .path-stone {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    background: #161513;
+    border: 2px solid #2a2520;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .path-stone:hover { border-color: #3a3530; }
+  .path-stone.selected {
+    border-color: #5a7a5a;
+    background: linear-gradient(90deg, #1a251a 0%, #161513 100%);
+  }
+  .path-rune {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #3a3530;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 14px;
+    color: #5a5040;
+    flex-shrink: 0;
+  }
+  .path-stone.selected .path-rune {
+    border-color: #5a7a5a;
+    color: #7aa66a;
+    background: #1a251a;
+  }
+  .path-text {
+    flex: 1;
+  }
+  .path-name {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #c9b896;
+    margin-bottom: 4px;
+  }
+  .path-desc {
+    font-size: 12px;
+    color: #6a6560;
+    line-height: 1.4;
+  }
+
+  /* Trade — merchant's tally */
+  .tally-slate {
+    background: #161513;
+    border: 1px solid #2a2520;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .tally-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #2a2520;
+    margin-bottom: 12px;
+  }
+  .tally-icon {
+    font-size: 20px;
+  }
+  .tally-title {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #a89a76;
+  }
+  .tally-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .tally-line.divider {
+    border-top: 1px solid #2a2520;
+    margin-top: 8px;
+    padding-top: 12px;
+  }
+  .tally-name { color: #8a8580; }
+  .tally-val {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+  }
+  .tally-val.pos { color: #7aa66a; }
+  .tally-val.neg { color: #b06a5a; }
+  .tally-val.total { color: #c9b896; }
+
+  /* Special actions — carved tablets */
+  .tablet {
+    background: linear-gradient(180deg, #252320 0%, #1e1c19 100%);
+    border: 1px solid #3a3530;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .tablet::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6a5a40, #8a7a5a, #6a5a40);
+    border-radius: 6px 6px 0 0;
+  }
+  .tablet-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #8a7a5a;
+    margin-bottom: 8px;
+  }
+  .tablet-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #b4afa5;
+  }
+
+  /* Submit — forge button */
+  .submit-section { padding: 10px 0 100px; }
+  .forge-btn {
+    width: 100%;
+    padding: 20px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #5a4a30 0%, #3a2a1a 100%);
+    color: #c9b896;
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .forge-btn::before {
+    content: 'ᚦ';
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 20px;
+    opacity: 0.5;
+  }
+  .forge-btn::after {
+    content: 'ᚦ';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 20px;
+    opacity: 0.5;
+  }
+  .submit-note {
+    text-align: center;
+    font-size: 12px;
+    color: #5a5040;
+    margin-top: 12px;
+  }
+
+  /* Bottom nav — stone tabs */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; width: 390px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 12px 0 28px;
+    background: linear-gradient(to top, #1a1815 70%, transparent);
+    border-top: 2px solid #2a2520;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 10px; color: #5a5040; text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .nav-item.active { color: #a89a76; }
+  .nav-rune {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 18px;
+  }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span class="time">8:14</span>
+  <div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px">📶</span><span style="font-size:11px">🔋</span></div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="turn-label">Turn 75 — Orders</div>
+  <div class="turn-context">Harrowgate · Cairnfall convoy departing · Winter in 5 turns</div>
+  <div class="deadline-pill">⏰ 11h 46m until the seal</div>
+</div>
+
+<div class="content">
+
+  <!-- Resources -->
+  <div class="section">
+    <div class="section-title">Tribe Stores</div>
+    <div class="resource-grid">
+      <div class="resource-stone">
+        <div class="resource-emoji">👥</div>
+        <div class="resource-num">299</div>
+        <div class="resource-lbl">People</div>
+      </div>
+      <div class="resource-stone warn">
+        <div class="resource-emoji">🍖</div>
+        <div class="resource-num warn">178</div>
+        <div class="resource-lbl">Food</div>
+      </div>
+      <div class="resource-stone">
+        <div class="resource-emoji">⚒️</div>
+        <div class="resource-num">134</div>
+        <div class="resource-lbl">Matl</div>
+      </div>
+      <div class="resource-stone">
+        <div class="resource-emoji">🔧</div>
+        <div class="resource-num">58</div>
+        <div class="resource-lbl">Tools</div>
+      </div>
+      <div class="resource-stone">
+        <div class="resource-emoji">⚔️</div>
+        <div class="resource-num">41</div>
+        <div class="resource-lbl">Wpns</div>
+      </div>
+      <div class="resource-stone">
+        <div class="resource-emoji">💎</div>
+        <div class="resource-num">17</div>
+        <div class="resource-lbl">Trade</div>
+      </div>
+      <div class="resource-stone">
+        <div class="resource-emoji">🐄</div>
+        <div class="resource-num">22</div>
+        <div class="resource-lbl">Live</div>
+      </div>
+      <div class="resource-stone">
+        <div class="resource-emoji">🐎</div>
+        <div class="resource-num">8</div>
+        <div class="resource-lbl">Mount</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Allocation -->
+  <div class="section">
+    <div class="section-title">The People</div>
+    <div class="alloc-list">
+      <div class="alloc-band gather">
+        <div class="alloc-icon">🏹</div>
+        <div class="alloc-info">
+          <div class="alloc-name">Gatherers</div>
+          <div class="alloc-note">Feed us on the road</div>
+        </div>
+        <div class="alloc-count">
+          <div class="alloc-num">135</div>
+          <div class="alloc-pct">45%</div>
+        </div>
+      </div>
+      <div class="alloc-band craft">
+        <div class="alloc-icon">⚒️</div>
+        <div class="alloc-info">
+          <div class="alloc-name">Crafters</div>
+          <div class="alloc-note">Weapons focus — Gareth leading</div>
+        </div>
+        <div class="alloc-count">
+          <div class="alloc-num">60</div>
+          <div class="alloc-pct">20%</div>
+        </div>
+      </div>
+      <div class="alloc-band scout">
+        <div class="alloc-icon">🧭</div>
+        <div class="alloc-info">
+          <div class="alloc-name">Scouts</div>
+          <div class="alloc-note">8 mounted · 2× range</div>
+        </div>
+        <div class="alloc-count">
+          <div class="alloc-num">45</div>
+          <div class="alloc-pct">15%</div>
+        </div>
+      </div>
+      <div class="alloc-band warrior">
+        <div class="alloc-icon">⚔️</div>
+        <div class="alloc-info">
+          <div class="alloc-name">Warriors</div>
+          <div class="alloc-note">41 armed · 18 unarmed</div>
+        </div>
+        <div class="alloc-count">
+          <div class="alloc-num">59</div>
+          <div class="alloc-pct">20%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Projection -->
+  <div class="section">
+    <div class="section-title">The Path Ahead</div>
+    <div class="prophecy-stone">
+      <div class="prophecy-title">If we march east...</div>
+      <div class="prophecy-line">
+        <div class="prophecy-rune">👥</div>
+        <div class="prophecy-text">New births</div>
+        <div class="prophecy-val good">+3 → 302</div>
+      </div>
+      <div class="prophecy-line">
+        <div class="prophecy-rune">🍖</div>
+        <div class="prophecy-text">Gathered and consumed</div>
+        <div class="prophecy-val bad">+81, -299</div>
+      </div>
+      <div class="prophecy-line">
+        <div class="prophecy-rune">⚒️</div>
+        <div class="prophecy-text">Materials gathered</div>
+        <div class="prophecy-val neutral">+18 → 152</div>
+      </div>
+      <div class="prophecy-line">
+        <div class="prophecy-rune">⚔️</div>
+        <div class="prophecy-text">Weapons crafted</div>
+        <div class="prophecy-val good">+4 → 45</div>
+      </div>
+      <div class="prophecy-line">
+        <div class="prophecy-rune">🧭</div>
+        <div class="prophecy-text">Hexes scouted</div>
+        <div class="prophecy-val neutral">4 (mounted)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Movement -->
+  <div class="section">
+    <div class="section-title">Choose the Road</div>
+    <div class="path-options">
+      <div class="path-stone selected">
+        <div class="path-rune">ᚲ</div>
+        <div class="path-text">
+          <div class="path-name">Straight east — grassland</div>
+          <div class="path-desc">1 turn to Cairnfall at convoy speed. Open, exposed. Drenn scouts reported. Poor foraging.</div>
+        </div>
+      </div>
+      <div class="path-stone">
+        <div class="path-rune">ᚠ</div>
+        <div class="path-text">
+          <div class="path-name">Southern loop — through the forest</div>
+          <div class="path-desc">2 turns via treeline. Better cover, better foraging. Avoids known Drenn tracks.</div>
+        </div>
+      </div>
+      <div class="path-stone">
+        <div class="path-rune">ᛟ</div>
+        <div class="path-text">
+          <div class="path-name">Stay one more day</div>
+          <div class="path-desc">Stockpile, trade, prepare. Contract deadline gets tighter.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trade -->
+  <div class="section">
+    <div class="section-title">Last Trade</div>
+    <div class="tally-slate">
+      <div class="tally-header">
+        <span class="tally-icon">⚖️</span>
+        <span class="tally-title">Harrowgate Market</span>
+      </div>
+      <div class="tally-line">
+        <span class="tally-name">Sell 10 trade goods</span>
+        <span class="tally-val pos">+110 food</span>
+      </div>
+      <div class="tally-line">
+        <span class="tally-name">Buy 3 weapons</span>
+        <span class="tally-val neg">-60 materials</span>
+      </div>
+      <div class="tally-line divider">
+        <span class="tally-name">After trade</span>
+        <span class="tally-val total">288 food · 44 wpn · 74 matl</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Special Actions -->
+  <div class="section">
+    <div class="section-title">Carved Orders</div>
+    <div class="tablet">
+      <div class="tablet-label">✨ Special Action 1</div>
+      <div class="tablet-text">Have Gareth the blacksmith lead a focused weapons push — assign him the best materials and 4 other crafters. We need every warrior armed before we hit the grassland. Prioritise spears.</div>
+    </div>
+    <div class="tablet">
+      <div class="tablet-label">✨ Special Action 2</div>
+      <div class="tablet-text">Send 4 mounted scouts ahead on the direct route to Cairnfall. Ride fast, stay on the ridgeline, report by nightfall: fresh Drenn tracks? Any sign of the main warband? If clear, we march at dawn. If not, we take the forest.</div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-section">
+    <button class="forge-btn">Seal Orders</button>
+    <div class="submit-note">Orders lock at 8:00 PM · you may alter them until the seal</div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <a class="nav-item" href="#"><span class="nav-rune">ᚱ</span><span>Report</span></a>
+  <a class="nav-item" href="#"><span class="nav-rune">ᛗ</span><span>Map</span></a>
+  <a class="nav-item" href="#"><span class="nav-rune">ᛏ</span><span>Tribe</span></a>
+  <a class="nav-item active" href="#"><span class="nav-rune">ᚩ</span><span>Orders</span></a>
+  <a class="nav-item" href="#"><span class="nav-rune">ᛒ</span><span>Words</span></a>
+</div>
+
+</body>
+</html>

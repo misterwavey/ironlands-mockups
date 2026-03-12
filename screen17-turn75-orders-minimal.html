@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Turn 75 Orders (Minimal)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #fff;
+    color: #000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.4;
+    overflow-x: hidden;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 20px 8px; font-size: 13px; color: #666;
+  }
+
+  /* Header */
+  .header {
+    padding: 16px 20px 24px;
+  }
+  .turn-label {
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: -1px;
+  }
+  .turn-context {
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+  }
+  .deadline {
+    font-size: 13px;
+    color: #999;
+    margin-top: 16px;
+  }
+
+  .content { padding: 0 20px 100px; }
+
+  /* Section */
+  .section {
+    margin-bottom: 32px;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #999;
+    margin-bottom: 12px;
+  }
+
+  /* Resources — simple list */
+  .resource-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .resource-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .resource-num {
+    font-size: 20px;
+    font-weight: 500;
+  }
+  .resource-num.warn { color: #c00; }
+  .resource-lbl {
+    font-size: 13px;
+    color: #666;
+  }
+
+  /* Allocation — clean rows */
+  .alloc-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .alloc-row:first-child { padding-top: 0; }
+  .alloc-name {
+    flex: 1;
+    font-size: 15px;
+  }
+  .alloc-note {
+    font-size: 13px;
+    color: #999;
+    margin-right: 16px;
+  }
+  .alloc-count {
+    font-size: 15px;
+    font-weight: 500;
+    min-width: 40px;
+    text-align: right;
+  }
+
+  /* Projection */
+  .proj-row {
+    display: flex;
+    align-items: baseline;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .proj-label {
+    flex: 1;
+    color: #666;
+  }
+  .proj-val {
+    font-weight: 500;
+  }
+  .proj-val.good { color: #080; }
+  .proj-val.bad { color: #c00; }
+
+  /* Movement */
+  .route-option {
+    padding: 16px 0;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+  .route-option:first-child { padding-top: 0; }
+  .route-option.selected .route-name {
+    font-weight: 500;
+  }
+  .route-option.selected .route-name::before {
+    content: '→ ';
+  }
+  .route-name {
+    font-size: 15px;
+  }
+  .route-desc {
+    font-size: 13px;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  /* Trade */
+  .trade-row {
+    display: flex;
+    align-items: baseline;
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .trade-item {
+    flex: 1;
+    color: #666;
+  }
+  .trade-val {
+    font-weight: 500;
+  }
+  .trade-val.pos { color: #080; }
+  .trade-val.neg { color: #c00; }
+  .trade-total {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    font-size: 13px;
+    color: #666;
+  }
+
+  /* Commands */
+  .command {
+    padding: 16px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .command:first-child { padding-top: 0; }
+  .command-num {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 4px;
+  }
+  .command-text {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Submit */
+  .submit-section {
+    margin-top: 40px;
+  }
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #000;
+    background: #000;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .submit-note {
+    font-size: 13px;
+    color: #999;
+    text-align: center;
+    margin-top: 12px;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 390px;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0 28px;
+    background: #fff;
+    border-top: 1px solid #eee;
+  }
+  .nav-item {
+    font-size: 13px;
+    color: #999;
+    text-decoration: none;
+    padding: 8px 16px;
+  }
+  .nav-item.active {
+    color: #000;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span>8:14</span>
+  <span>📶 🔋</span>
+</div>
+
+<div class="header">
+  <div class="turn-label">Turn 75</div>
+  <div class="turn-context">Harrowgate · Cairnfall convoy · Winter in 5</div>
+  <div class="deadline">11h 46m remaining</div>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <div class="section-title">Resources</div>
+    <div class="resource-row">
+      <div class="resource-item">
+        <span class="resource-num">299</span>
+        <span class="resource-lbl">people</span>
+      </div>
+      <div class="resource-item">
+        <span class="resource-num warn">178</span>
+        <span class="resource-lbl">food</span>
+      </div>
+      <div class="resource-item">
+        <span class="resource-num">134</span>
+        <span class="resource-lbl">matl</span>
+      </div>
+      <div class="resource-item">
+        <span class="resource-num">58</span>
+        <span class="resource-lbl">tools</span>
+      </div>
+      <div class="resource-item">
+        <span class="resource-num">41</span>
+        <span class="resource-lbl">wpns</span>
+      </div>
+      <div class="resource-item">
+        <span class="resource-num">17</span>
+        <span class="resource-lbl">trade</span>
+      </div>
+      <div class="resource-item">
+        <span class="resource-num">22</span>
+        <span class="resource-lbl">live</span>
+      </div>
+      <div class="resource-item">
+        <span class="resource-num">8</span>
+        <span class="resource-lbl">mount</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">People</div>
+    <div class="alloc-row">
+      <span class="alloc-name">Gatherers</span>
+      <span class="alloc-note">feed us</span>
+      <span class="alloc-count">135</span>
+    </div>
+    <div class="alloc-row">
+      <span class="alloc-name">Crafters</span>
+      <span class="alloc-note">weapons</span>
+      <span class="alloc-count">60</span>
+    </div>
+    <div class="alloc-row">
+      <span class="alloc-name">Scouts</span>
+      <span class="alloc-note">8 mounted</span>
+      <span class="alloc-count">45</span>
+    </div>
+    <div class="alloc-row">
+      <span class="alloc-name">Warriors</span>
+      <span class="alloc-note">41 armed</span>
+      <span class="alloc-count">59</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">If we march east</div>
+    <div class="proj-row">
+      <span class="proj-label">Births</span>
+      <span class="proj-val good">+3 → 302</span>
+    </div>
+    <div class="proj-row">
+      <span class="proj-label">Food</span>
+      <span class="proj-val bad">+81, −299</span>
+    </div>
+    <div class="proj-row">
+      <span class="proj-label">Materials</span>
+      <span class="proj-val">+18 → 152</span>
+    </div>
+    <div class="proj-row">
+      <span class="proj-label">Weapons</span>
+      <span class="proj-val good">+4 → 45</span>
+    </div>
+    <div class="proj-row">
+      <span class="proj-label">Scouting</span>
+      <span class="proj-val">4 hexes</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Movement</div>
+    <div class="route-option selected">
+      <div class="route-name">East — grassland</div>
+      <div class="route-desc">1 turn · Exposed · Poor foraging</div>
+    </div>
+    <div class="route-option">
+      <div class="route-name">South — forest</div>
+      <div class="route-desc">2 turns · Cover · Better foraging</div>
+    </div>
+    <div class="route-option">
+      <div class="route-name">Hold</div>
+      <div class="route-desc">Stockpile · Contract tightens</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Trade</div>
+    <div class="trade-row">
+      <span class="trade-item">Sell 10 trade goods</span>
+      <span class="trade-val pos">+110 food</span>
+    </div>
+    <div class="trade-row">
+      <span class="trade-item">Buy 3 weapons</span>
+      <span class="trade-val neg">−60 matl</span>
+    </div>
+    <div class="trade-total">288 food · 44 wpns · 74 matl</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Commands</div>
+    <div class="command">
+      <div class="command-num">1</div>
+      <div class="command-text">Have Gareth lead a weapons push. Assign best materials and 4 crafters. Prioritise spears.</div>
+    </div>
+    <div class="command">
+      <div class="command-num">2</div>
+      <div class="command-text">Send 4 mounted scouts ahead to Cairnfall. Report by nightfall: Drenn tracks? Warband signs?</div>
+    </div>
+  </div>
+
+  <div class="submit-section">
+    <button class="submit-btn">Submit Orders</button>
+    <div class="submit-note">Locks at 8:00 PM</div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <a class="nav-item" href="#">Report</a>
+  <a class="nav-item" href="#">Map</a>
+  <a class="nav-item" href="#">Tribe</a>
+  <a class="nav-item active" href="#">Orders</a>
+  <a class="nav-item" href="#">Msgs</a>
+</div>
+
+</body>
+</html>

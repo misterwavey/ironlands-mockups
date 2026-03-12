@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Turn Entry</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #0a0c10;
+    color: #e8e0d4;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+  }
+  .status-bar .time { font-size: 15px; color: #ccc; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 16px 24px 20px;
+    border-bottom: 1px solid rgba(193, 167, 120, 0.15);
+  }
+  .header .game-title {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #c1a778;
+    margin-bottom: 4px;
+  }
+  .header .turn-info {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #f0e6d6;
+  }
+  .header .deadline {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #9a917f;
+    margin-top: 8px;
+  }
+
+  /* Content */
+  .content {
+    padding: 20px 24px 120px;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 28px;
+  }
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c1a778;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(193, 167, 120, 0.2);
+  }
+
+  /* Resource grid */
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .resource-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(193, 167, 120, 0.1);
+    padding: 14px 8px;
+    text-align: center;
+  }
+  .resource-value {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #f0e6d6;
+  }
+  .resource-value.warn { color: #c17a5a; }
+  .resource-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9a917f;
+    margin-top: 4px;
+  }
+
+  /* Sliders */
+  .slider-row {
+    margin: 18px 0;
+    padding: 16px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(193, 167, 120, 0.08);
+  }
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .slider-name {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: #c1a778;
+  }
+  .slider-count {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #f0e6d6;
+  }
+  .slider-track {
+    height: 4px;
+    background: rgba(193, 167, 120, 0.15);
+    position: relative;
+  }
+  .slider-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #c1a778, #d4b88a);
+    position: relative;
+  }
+  .slider-thumb {
+    width: 20px;
+    height: 20px;
+    background: #0a0c10;
+    border: 2px solid #c1a778;
+    border-radius: 50%;
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 0 10px rgba(193, 167, 120, 0.3);
+  }
+  .slider-percent {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #9a917f;
+    margin-top: 8px;
+    text-align: right;
+  }
+
+  /* Crafter allocation */
+  .alloc-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(193, 167, 120, 0.1);
+  }
+  .alloc-row:last-child { border-bottom: none; }
+  .alloc-name {
+    flex: 1;
+    font-size: 15px;
+    color: #e8e0d4;
+  }
+  .alloc-value {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    color: #c1a778;
+    min-width: 50px;
+    text-align: right;
+  }
+  .alloc-unit {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #9a917f;
+    margin-left: 4px;
+  }
+
+  /* Movement */
+  .movement-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .movement-option {
+    padding: 16px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(193, 167, 120, 0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .movement-option:hover {
+    border-color: rgba(193, 167, 120, 0.3);
+  }
+  .movement-option.selected {
+    border-color: #c1a778;
+    background: rgba(193, 167, 120, 0.08);
+  }
+  .movement-dir {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: #f0e6d6;
+    margin-bottom: 4px;
+  }
+  .movement-option.selected .movement-dir {
+    color: #c1a778;
+  }
+  .movement-terrain {
+    font-size: 13px;
+    color: #9a917f;
+    font-style: italic;
+  }
+  .movement-cost {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #666;
+    margin-top: 6px;
+  }
+
+  /* Special action */
+  .special-box {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(193, 167, 120, 0.15);
+    padding: 16px;
+  }
+  .special-textarea {
+    width: 100%;
+    min-height: 120px;
+    background: transparent;
+    border: none;
+    color: #e8e0d4;
+    font-family: 'EB Garamond', serif;
+    font-size: 16px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+  .special-textarea::placeholder {
+    color: #666;
+    font-style: italic;
+  }
+  .special-textarea:focus {
+    outline: none;
+  }
+  .special-hint {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #9a917f;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(193, 167, 120, 0.1);
+  }
+
+  /* Projection */
+  .proj-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(193, 167, 120, 0.08);
+    font-size: 15px;
+  }
+  .proj-row:last-child { border-bottom: none; }
+  .proj-label {
+    color: #9a917f;
+  }
+  .proj-value {
+    font-family: 'Cinzel', serif;
+    color: #f0e6d6;
+  }
+  .proj-value.good { color: #7a9a6a; }
+  .proj-value.bad { color: #c17a5a; }
+
+  /* Submit */
+  .submit-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 390px;
+    padding: 16px 24px 32px;
+    background: linear-gradient(180deg, transparent 0%, #0a0c10 20%);
+    border-top: 1px solid rgba(193, 167, 120, 0.15);
+  }
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: #c1a778;
+    border: none;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #0a0c10;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .submit-btn:hover {
+    background: #d4b88a;
+  }
+  .submit-note {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #9a917f;
+    text-align: center;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span class="time">21:52</span>
+  <span>📶 🔋</span>
+</div>
+
+<div class="header">
+  <div class="game-title">Ironlands</div>
+  <div class="turn-info">Submit Turn 75</div>
+  <div class="deadline">⏱ 10h 8m remaining</div>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <div class="section-label">The Tribe's Stores</div>
+    <div class="resource-grid">
+      <div class="resource-item">
+        <div class="resource-value">299</div>
+        <div class="resource-label">People</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-value warn">178</div>
+        <div class="resource-label">Food</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-value">134</div>
+        <div class="resource-label">Matl</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-value">58</div>
+        <div class="resource-label">Tools</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-value">41</div>
+        <div class="resource-label">Wpns</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-value">17</div>
+        <div class="resource-label">Trade</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-value">22</div>
+        <div class="resource-label">Live</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-value">8</div>
+        <div class="resource-label">Mount</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">The People's Labour</div>
+    
+    <div class="slider-row">
+      <div class="slider-header">
+        <span class="slider-name">Gatherers</span>
+        <span class="slider-count">135</span>
+      </div>
+      <div class="slider-track">
+        <div class="slider-fill" style="width: 45%;">
+          <div class="slider-thumb"></div>
+        </div>
+      </div>
+      <div class="slider-percent">45%</div>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-header">
+        <span class="slider-name">Crafters</span>
+        <span class="slider-count">60</span>
+      </div>
+      <div class="slider-track">
+        <div class="slider-fill" style="width: 20%;">
+          <div class="slider-thumb"></div>
+        </div>
+      </div>
+      <div class="slider-percent">20%</div>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-header">
+        <span class="slider-name">Scouts</span>
+        <span class="slider-count">45</span>
+      </div>
+      <div class="slider-track">
+        <div class="slider-fill" style="width: 15%;">
+          <div class="slider-thumb"></div>
+        </div>
+      </div>
+      <div class="slider-percent">15%</div>
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-header">
+        <span class="slider-name">Warriors</span>
+        <span class="slider-count">59</span>
+      </div>
+      <div class="slider-track">
+        <div class="slider-fill" style="width: 20%;">
+          <div class="slider-thumb"></div>
+        </div>
+      </div>
+      <div class="slider-percent">20%</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Crafter's Work</div>
+    <div class="alloc-row">
+      <span class="alloc-name">Tools</span>
+      <span class="alloc-value">60<span class="alloc-unit">%</span></span>
+    </div>
+    <div class="alloc-row">
+      <span class="alloc-name">Weapons</span>
+      <span class="alloc-value">30<span class="alloc-unit">%</span></span>
+    </div>
+    <div class="alloc-row">
+      <span class="alloc-name">Trade Goods</span>
+      <span class="alloc-value">10<span class="alloc-unit">%</span></span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Path of March</div>
+    <div class="movement-grid">
+      <div class="movement-option selected">
+        <div class="movement-dir">Hex 67</div>
+        <div class="movement-terrain">Whisperwood Edge</div>
+        <div class="movement-cost">3 MP · Forest</div>
+      </div>
+      <div class="movement-option">
+        <div class="movement-dir">Hex 68</div>
+        <div class="movement-terrain">Cairnfall Approach</div>
+        <div class="movement-cost">2 MP · Grassland</div>
+      </div>
+      <div class="movement-option">
+        <div class="movement-dir">Hex 54</div>
+        <div class="movement-terrain">Black Hills</div>
+        <div class="movement-cost">4 MP · Mountain</div>
+      </div>
+      <div class="movement-option">
+        <div class="movement-dir">Hold</div>
+        <div class="movement-terrain">Harrowgate</div>
+        <div class="movement-cost">Camp here</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Special Action</div>
+    <div class="special-box">
+      <textarea class="special-textarea" placeholder="What will you attempt this turn?
+
+Send scouts to explore the valley ahead...
+Negotiate trade with Cairnfall...
+Ambush the Drenn warband..."></textarea>
+      <div class="special-hint">One action per turn. The Game Master will adjudicate.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">The Seer's Vision</div>
+    <div class="proj-row">
+      <span class="proj-label">People</span>
+      <span class="proj-value">+3 → 302</span>
+    </div>
+    <div class="proj-row">
+      <span class="proj-label">Food</span>
+      <span class="proj-value bad">+81, −299</span>
+    </div>
+    <div class="proj-row">
+      <span class="proj-label">Materials</span>
+      <span class="proj-value">+18 → 152</span>
+    </div>
+    <div class="proj-row">
+      <span class="proj-label">Tools</span>
+      <span class="proj-value">+4 → 62</span>
+    </div>
+    <div class="proj-row">
+      <span class="proj-label">Weapons</span>
+      <span class="proj-value good">+2 → 43</span>
+    </div>
+    <div class="proj-row">
+      <span class="proj-label">Scouting</span>
+      <span class="proj-value">4 hexes revealed</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="submit-bar">
+  <button class="submit-btn">Seal the Orders</button>
+  <div class="submit-note">Locks at dawn tomorrow</div>
+</div>
+
+</body>
+</html>

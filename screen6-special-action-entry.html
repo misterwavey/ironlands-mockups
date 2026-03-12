@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Special Action Entry</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #0a0c10;
+    color: #e8e0d4;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+  }
+  .status-bar .time { font-size: 15px; color: #ccc; }
+
+  /* Top bar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 14px;
+    border-bottom: 1px solid rgba(193, 167, 120, 0.12);
+  }
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #c1a778;
+    cursor: pointer;
+  }
+  .back-btn .arrow { font-size: 18px; }
+  .top-title {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f0e6d6;
+  }
+  .slot-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #b464dc;
+    background: rgba(180, 100, 220, 0.12);
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  /* Info banner */
+  .info-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    background: rgba(180, 100, 220, 0.06);
+    border: 1px solid rgba(180, 100, 220, 0.15);
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .info-banner .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .info-banner-text {
+    font-family: 'EB Garamond', serif;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: #b8b0a2;
+  }
+  .info-banner-text strong { color: #d4c8b8; }
+
+  /* Context cards */
+  .context-section {
+    margin-bottom: 20px;
+  }
+  .context-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c1a778;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .context-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(193, 167, 120, 0.2), transparent);
+  }
+
+  .context-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(193, 167, 120, 0.1);
+    border-radius: 20px;
+    font-size: 12px;
+    color: #b8b0a2;
+    margin: 0 6px 8px 0;
+  }
+  .context-chip .chip-icon { font-size: 13px; }
+  .context-chip.selected {
+    border-color: rgba(180, 100, 220, 0.35);
+    background: rgba(180, 100, 220, 0.08);
+    color: #d4c0e4;
+  }
+
+  /* Main textarea */
+  .action-compose {
+    margin-bottom: 16px;
+  }
+  .compose-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c1a778;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .compose-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(193, 167, 120, 0.2), transparent);
+  }
+
+  .compose-box {
+    background: rgba(180, 100, 220, 0.04);
+    border: 1px solid rgba(180, 100, 220, 0.2);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .compose-textarea {
+    width: 100%;
+    min-height: 180px;
+    background: transparent;
+    border: none;
+    padding: 16px 18px;
+    color: #e8e0d4;
+    font-family: 'EB Garamond', serif;
+    font-size: 16px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+  }
+  .compose-textarea::placeholder {
+    color: #3a3630;
+    font-style: italic;
+  }
+  .compose-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-top: 1px solid rgba(180, 100, 220, 0.1);
+  }
+  .char-count {
+    font-size: 11px;
+    color: #5a5448;
+  }
+  .compose-tools {
+    display: flex;
+    gap: 6px;
+  }
+  .compose-tool-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid rgba(193, 167, 120, 0.1);
+    background: rgba(255, 255, 255, 0.02);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  /* AI suggestion */
+  .ai-assist {
+    background: rgba(100, 180, 255, 0.05);
+    border: 1px solid rgba(100, 180, 255, 0.15);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .ai-assist-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .ai-assist-header .ai-icon {
+    font-size: 16px;
+  }
+  .ai-assist-header .ai-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64b4ff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .ai-assist-body {
+    font-family: 'EB Garamond', serif;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: #9ab0c8;
+  }
+  .ai-assist-body em { color: #64b4ff; }
+  .ai-assist-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .ai-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+  }
+  .ai-btn.accept {
+    background: rgba(100, 180, 255, 0.15);
+    color: #64b4ff;
+  }
+  .ai-btn.dismiss {
+    background: rgba(255, 255, 255, 0.04);
+    color: #7a7468;
+  }
+
+  /* Previous actions recap */
+  .prev-action {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(193, 167, 120, 0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .prev-action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .prev-action-turn {
+    font-size: 11px;
+    font-weight: 600;
+    color: #7a7468;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .prev-action-result {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .prev-action-result.success { background: rgba(120, 200, 80, 0.12); color: #78c850; }
+  .prev-action-result.partial { background: rgba(200, 160, 60, 0.12); color: #c8a03c; }
+  .prev-action-result.failed { background: rgba(220, 80, 60, 0.12); color: #dc503c; }
+  .prev-action-text {
+    font-family: 'EB Garamond', serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #b8b0a2;
+    font-style: italic;
+  }
+
+  /* Submit button */
+  .submit-section {
+    padding: 8px 0 100px;
+  }
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #b464dc, #8a48b0);
+    color: #f0e6f8;
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(180, 100, 220, 0.25);
+  }
+  .submit-note {
+    text-align: center;
+    font-size: 11px;
+    color: #5a5448;
+    margin-top: 8px;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 390px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0 28px;
+    background: linear-gradient(to top, #0a0c10 60%, transparent);
+    border-top: 1px solid rgba(193, 167, 120, 0.1);
+    z-index: 60;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: #5a5448;
+    text-decoration: none;
+  }
+  .nav-item.active { color: #c1a778; }
+  .nav-icon { font-size: 20px; }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span class="time">14:33</span>
+  <div style="display:flex;gap:6px;align-items:center">
+    <span style="font-size:11px">📶</span>
+    <span style="font-size:11px">🔋</span>
+  </div>
+</div>
+
+<div class="top-bar">
+  <div class="back-btn">
+    <span class="arrow">‹</span>
+    <span>Orders</span>
+  </div>
+  <div class="top-title">Special Action</div>
+  <div class="slot-badge">Slot 2 of 2</div>
+</div>
+
+<div class="content">
+
+  <!-- Info banner -->
+  <div class="info-banner">
+    <span class="icon">✨</span>
+    <div class="info-banner-text">
+      Special actions are <strong>freeform orders</strong> — anything your clan might attempt that doesn't fit standard categories. The AI Game Master will interpret your intent and determine the outcome based on your resources, skills, and circumstances.
+    </div>
+  </div>
+
+  <!-- Relevant context -->
+  <div class="context-section">
+    <div class="context-label">Relevant Context</div>
+    <div>
+      <span class="context-chip selected"><span class="chip-icon">🔮</span> Ancient waymarkers (Hex 3244)</span>
+      <span class="context-chip"><span class="chip-icon">🦅</span> Falconer available</span>
+      <span class="context-chip"><span class="chip-icon">⛏️</span> Copper surplus</span>
+      <span class="context-chip"><span class="chip-icon">🌲</span> Forest knowledge</span>
+      <span class="context-chip"><span class="chip-icon">👥</span> 284 population</span>
+      <span class="context-chip"><span class="chip-icon">🔥</span> Eastern refugees</span>
+    </div>
+  </div>
+
+  <!-- Compose box -->
+  <div class="action-compose">
+    <div class="compose-label">Your Action</div>
+    <div class="compose-box">
+      <div class="compose-textarea" contenteditable="false" style="white-space: pre-wrap;">Send a small expedition of 4 scouts along the ancient waymarkers discovered at the mountain pass. They should carry enough provisions for 5 days and document any carvings or symbols they find. If the trail leads to an inhabited valley, make peaceful contact — bring copper ingots as a gift. If hostile, retreat immediately and mark the route on our maps.
+
+The falconer should send a bird to follow the party at distance — if they don't return in 5 days, the falcon returns as warning.</div>
+      <div class="compose-footer">
+        <div class="char-count">487 / 800 characters</div>
+        <div class="compose-tools">
+          <div class="compose-tool-btn" title="Clear">🗑️</div>
+          <div class="compose-tool-btn" title="Templates">📋</div>
+          <div class="compose-tool-btn" title="AI Help">🤖</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI suggestion -->
+  <div class="ai-assist">
+    <div class="ai-assist-header">
+      <span class="ai-icon">🤖</span>
+      <span class="ai-label">GM Insight</span>
+    </div>
+    <div class="ai-assist-body">
+      Good use of the falconer as a safety net. Consider: the <em>eastern refugees</em> might have knowledge of what lies beyond the mountains — you could recruit a guide from among them to improve your odds. This would cost ~5 food but significantly increase the expedition's chance of success.
+    </div>
+    <div class="ai-assist-actions">
+      <button class="ai-btn accept">✏️ Add to action</button>
+      <button class="ai-btn dismiss">Dismiss</button>
+    </div>
+  </div>
+
+  <!-- Previous special actions -->
+  <div class="context-section">
+    <div class="context-label">Recent Special Actions</div>
+
+    <div class="prev-action">
+      <div class="prev-action-header">
+        <span class="prev-action-turn">Turn 47 · Slot 1</span>
+        <span class="prev-action-result partial">Queued</span>
+      </div>
+      <div class="prev-action-text">
+        "Send a messenger to Clan Thornwall proposing a mutual defence pact against the Drenn…"
+      </div>
+    </div>
+
+    <div class="prev-action">
+      <div class="prev-action-header">
+        <span class="prev-action-turn">Turn 46 · Slot 1</span>
+        <span class="prev-action-result success">Success</span>
+      </div>
+      <div class="prev-action-text">
+        "Train falconer to capture young birds from the cliff nests…"
+      </div>
+    </div>
+
+    <div class="prev-action">
+      <div class="prev-action-header">
+        <span class="prev-action-turn">Turn 45 · Slot 1</span>
+        <span class="prev-action-result failed">Failed</span>
+      </div>
+      <div class="prev-action-text">
+        "Attempt to forge an iron blade using the copper tools and new techniques…"
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-section">
+    <button class="submit-btn">✨ SAVE SPECIAL ACTION</button>
+    <div class="submit-note">Returns you to the Orders screen · Edit anytime before deadline</div>
+  </div>
+
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+  <a class="nav-item" href="#">
+    <span class="nav-icon">📜</span>
+    <span>Report</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">🗺️</span>
+    <span>Map</span>
+  </a>
+  <a class="nav-item active" href="#">
+    <span class="nav-icon">⚙️</span>
+    <span>Orders</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">🏰</span>
+    <span>Clan</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">💬</span>
+    <span>Messages</span>
+  </a>
+</div>
+
+</body>
+</html>

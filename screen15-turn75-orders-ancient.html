@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Turn 75 Orders (Ancient)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cormorant+Infant:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #e8e0d0;
+    color: #3a3020;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.55;
+    overflow-x: hidden;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(139, 125, 100, 0.03) 2px,
+        rgba(139, 125, 100, 0.03) 4px
+      ),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='papyrus'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23papyrus)' opacity='0.08'/%3E%3C/svg%3E");
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 24px 8px; font-size: 12px; font-weight: 600; color: #8a7a60;
+  }
+  .status-bar .time { font-size: 15px; color: #5a4a30; }
+
+  /* Header — illuminated manuscript style */
+  .header {
+    padding: 24px;
+    background: linear-gradient(180deg, #f5f0e5 0%, #e8e0d0 100%);
+    border-bottom: 1px solid #c4b8a0;
+    position: relative;
+    text-align: center;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #a08050, transparent);
+  }
+  .header::after {
+    content: '✦';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    color: #a08050;
+    background: #e8e0d0;
+    padding: 0 10px;
+  }
+  .turn-initial {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 72px;
+    color: #8a2020;
+    line-height: 1;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    margin-bottom: 4px;
+  }
+  .turn-initial::first-letter {
+    font-size: 90px;
+  }
+  .turn-label {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 18px;
+    color: #5a4030;
+    letter-spacing: 3px;
+    margin-top: -10px;
+  }
+  .turn-context {
+    font-size: 13px;
+    color: #7a6a50;
+    font-style: italic;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #c4b8a0;
+  }
+  .deadline-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 8px 18px;
+    background: #f5f0e5;
+    border: 1px solid #d4c8b0;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8a2020;
+  }
+
+  .content { padding: 24px 22px; }
+
+  /* Decorative dividers */
+  .divider-ornate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: #a08050;
+    font-size: 14px;
+  }
+  .divider-ornate::before,
+  .divider-ornate::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #c4b8a0, transparent);
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 24px;
+  }
+  .section-title {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 16px;
+    color: #5a4030;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    text-align: center;
+    position: relative;
+  }
+  .section-title::before {
+    content: '❧';
+    margin-right: 10px;
+    color: #8a2020;
+  }
+  .section-title::after {
+    content: '❧';
+    margin-left: 10px;
+    color: #8a2020;
+  }
+
+  /* Resources — illuminated capitals style */
+  .resource-scroll {
+    background: linear-gradient(180deg, #f5f0e5 0%, #ebe5d8 100%);
+    border: 1px solid #d4c8b0;
+    border-radius: 8px;
+    padding: 18px;
+    position: relative;
+  }
+  .resource-scroll::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border: 1px solid #c4b8a0;
+    border-radius: 6px;
+    pointer-events: none;
+  }
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .resource-item {
+    text-align: center;
+    padding: 10px 4px;
+  }
+  .resource-initial {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 32px;
+    color: #5a4030;
+    line-height: 1;
+  }
+  .resource-initial.warn { color: #a04020; }
+  .resource-num {
+    font-family: 'Cormorant Infant', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #3a3020;
+    margin-top: 2px;
+  }
+  .resource-num.warn { color: #a04020; }
+  .resource-lbl {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #8a7a60;
+  }
+
+  /* Allocation — medieval company list */
+  .company-list {
+    background: #f5f0e5;
+    border: 1px solid #d4c8b0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .company-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border-bottom: 1px solid #e0d8c8;
+  }
+  .company-row:last-child { border: none; }
+  .company-initial {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 36px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e8e0d0;
+    border: 2px solid #c4b8a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .company-row.gather .company-initial { color: #4a6a3a; border-color: #8ab06a; }
+  .company-row.craft .company-initial { color: #7a5a2a; border-color: #c4a060; }
+  .company-row.scout .company-initial { color: #3a5a7a; border-color: #6a9aba; }
+  .company-row.warrior .company-initial { color: #7a2a2a; border-color: #b06a6a; }
+  .company-info { flex: 1; }
+  .company-name {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 15px;
+    color: #5a4030;
+  }
+  .company-note {
+    font-size: 13px;
+    color: #7a6a50;
+    font-style: italic;
+  }
+  .company-count {
+    text-align: right;
+  }
+  .company-num {
+    font-family: 'Cormorant Infant', serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: #3a3020;
+    line-height: 1;
+  }
+  .company-pct {
+    font-size: 11px;
+    color: #8a7a60;
+  }
+
+  /* Projection — prophecy scroll */
+  .prophecy-scroll {
+    background: #f5f0e5;
+    border: 1px solid #d4c8b0;
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+  }
+  .prophecy-scroll::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #a08050, transparent);
+  }
+  .prophecy-intro {
+    font-style: italic;
+    color: #7a6a50;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed #c4b8a0;
+  }
+  .prophecy-line {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    font-size: 15px;
+  }
+  .prophecy-line .initial {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 20px;
+    color: #5a4030;
+    width: 28px;
+    text-align: center;
+  }
+  .prophecy-line .text {
+    flex: 1;
+    color: #5a4a30;
+  }
+  .prophecy-line .val {
+    font-family: 'Cormorant Infant', serif;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .prophecy-line .val.good { color: #4a6a3a; }
+  .prophecy-line .val.bad { color: #8a3020; }
+  .prophecy-line .val.neutral { color: #5a6a8a; }
+
+  /* Movement — ancient paths */
+  .paths-container {
+    background: #f5f0e5;
+    border: 1px solid #d4c8b0;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .path-way {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    background: #ebe5d8;
+    border: 1px solid #d4c8b0;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .path-way:last-child { margin-bottom: 0; }
+  .path-way.selected {
+    background: #e8f0e0;
+    border-color: #8ab06a;
+  }
+  .path-initial {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e8e0d0;
+    border: 2px solid #c4b8a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #8a7a60;
+  }
+  .path-way.selected .path-initial {
+    background: #8ab06a;
+    border-color: #6a904a;
+    color: #fff;
+  }
+  .path-text { flex: 1; }
+  .path-name {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 14px;
+    color: #5a4030;
+    margin-bottom: 4px;
+  }
+  .path-way.selected .path-name { color: #4a6a3a; }
+  .path-desc {
+    font-size: 13px;
+    color: #7a6a50;
+    font-style: italic;
+    line-height: 1.4;
+  }
+
+  /* Trade — merchant's ledger */
+  .ledger {
+    background: #f5f0e5;
+    border: 1px solid #d4c8b0;
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+  }
+  .ledger::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 50%;
+    width: 1px;
+    background: repeating-linear-gradient(
+      to bottom,
+      #d4c8b0,
+      #d4c8b0 8px,
+      transparent 8px,
+      transparent 16px
+    );
+  }
+  .ledger-header {
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #c4b8a0;
+  }
+  .ledger-title {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 16px;
+    color: #5a4030;
+  }
+  .ledger-sub {
+    font-size: 12px;
+    color: #8a7a60;
+    font-style: italic;
+  }
+  .ledger-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14px;
+    border-bottom: 1px dotted #d4c8b0;
+  }
+  .ledger-line:last-child { border: none; }
+  .ledger-item { color: #5a4a30; }
+  .ledger-val {
+    font-family: 'Cormorant Infant', serif;
+    font-weight: 600;
+  }
+  .ledger-val.pos { color: #4a6a3a; }
+  .ledger-val.neg { color: #8a3020; }
+  .ledger-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid #c4b8a0;
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 14px;
+    color: #5a4030;
+  }
+
+  /* Special actions — illuminated verses */
+  .verse {
+    background: linear-gradient(180deg, #f5f0e5 0%, #ebe5d8 100%);
+    border: 1px solid #d4c8b0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .verse::before {
+    content: attr(data-num);
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #8a2020;
+    color: #f5f0e5;
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .verse-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #8a2020;
+    margin-bottom: 8px;
+    margin-left: 20px;
+  }
+  .verse-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #3a3020;
+    text-align: justify;
+  }
+  .verse-text::first-letter {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 42px;
+    float: left;
+    line-height: 0.8;
+    padding-right: 8px;
+    color: #8a2020;
+  }
+
+  /* Submit — illuminated button */
+  .submit-section { padding: 10px 0 100px; text-align: center; }
+  .seal-btn {
+    width: 100%;
+    padding: 22px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #8a2020 0%, #6a1010 100%);
+    color: #f5f0e5;
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 20px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(138, 32, 32, 0.3);
+  }
+  .seal-btn::before,
+  .seal-btn::after {
+    content: '✦';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    opacity: 0.6;
+  }
+  .seal-btn::before { left: 30px; }
+  .seal-btn::after { right: 30px; }
+  .submit-note {
+    font-size: 13px;
+    color: #7a6a50;
+    font-style: italic;
+    margin-top: 12px;
+  }
+
+  /* Bottom nav — script tabs */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; width: 390px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 12px 0 28px;
+    background: linear-gradient(to top, #e8e0d0 70%, transparent);
+    border-top: 1px solid #c4b8a0;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 10px; color: #8a7a60; text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .nav-item.active { color: #8a2020; }
+  .nav-initial {
+    font-family: 'Uncial Antiqua', cursive;
+    font-size: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span class="time">8:14</span>
+  <div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px">📶</span><span style="font-size:11px">🔋</span></div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="turn-initial">T</div>
+  <div class="turn-label">urn Seventy-Five</div>
+  <div class="turn-context">Harrowgate · Cairnfall convoy departing · Winter in five turns hence</div>
+  <div class="deadline-pill">⏰ Eleven hours and forty-six minutes remain</div>
+</div>
+
+<div class="content">
+
+  <!-- Resources -->
+  <div class="section">
+    <div class="section-title">Stores of the Tribe</div>
+    <div class="resource-scroll">
+      <div class="resource-grid">
+        <div class="resource-item">
+          <div class="resource-initial">P</div>
+          <div class="resource-num">299</div>
+          <div class="resource-lbl">People</div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-initial warn">F</div>
+          <div class="resource-num warn">178</div>
+          <div class="resource-lbl">Food</div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-initial">M</div>
+          <div class="resource-num">134</div>
+          <div class="resource-lbl">Matl</div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-initial">T</div>
+          <div class="resource-num">58</div>
+          <div class="resource-lbl">Tools</div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-initial">W</div>
+          <div class="resource-num">41</div>
+          <div class="resource-lbl">Wpns</div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-initial">G</div>
+          <div class="resource-num">17</div>
+          <div class="resource-lbl">Trade</div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-initial">L</div>
+          <div class="resource-num">22</div>
+          <div class="resource-lbl">Live</div>
+        </div>
+        <div class="resource-item">
+          <div class="resource-initial">H</div>
+          <div class="resource-num">8</div>
+          <div class="resource-lbl">Mount</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider-ornate">❦</div>
+
+  <!-- Allocation -->
+  <div class="section">
+    <div class="section-title">The Companies</div>
+    <div class="company-list">
+      <div class="company-row gather">
+        <div class="company-initial">G</div>
+        <div class="company-info">
+          <div class="company-name">The Gatherers</div>
+          <div class="company-note">Feed us on the road</div>
+        </div>
+        <div class="company-count">
+          <div class="company-num">135</div>
+          <div class="company-pct">Forty-five in the hundred</div>
+        </div>
+      </div>
+      <div class="company-row craft">
+        <div class="company-initial">C</div>
+        <div class="company-info">
+          <div class="company-name">The Crafters</div>
+          <div class="company-note">Weapons focus — Gareth leading</div>
+        </div>
+        <div class="company-count">
+          <div class="company-num">60</div>
+          <div class="company-pct">Twenty in the hundred</div>
+        </div>
+      </div>
+      <div class="company-row scout">
+        <div class="company-initial">S</div>
+        <div class="company-info">
+          <div class="company-name">The Scouts</div>
+          <div class="company-note">Eight mounted · twice the range</div>
+        </div>
+        <div class="company-count">
+          <div class="company-num">45</div>
+          <div class="company-pct">Fifteen in the hundred</div>
+        </div>
+      </div>
+      <div class="company-row warrior">
+        <div class="company-initial">W</div>
+        <div class="company-info">
+          <div class="company-name">The Warriors</div>
+          <div class="company-note">Forty-one armed · eighteen bare</div>
+        </div>
+        <div class="company-count">
+          <div class="company-num">59</div>
+          <div class="company-pct">Twenty in the hundred</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider-ornate">❦</div>
+
+  <!-- Projection -->
+  <div class="section">
+    <div class="section-title">What the Seers Foretell</div>
+    <div class="prophecy-scroll">
+      <div class="prophecy-intro">If we march east upon the morrow...</div>
+      <div class="prophecy-line">
+        <span class="initial">P</span>
+        <span class="text">New souls join the tribe</span>
+        <span class="val good">+3 → 302</span>
+      </div>
+      <div class="prophecy-line">
+        <span class="initial">F</span>
+        <span class="text">Gathered and consumed</span>
+        <span class="val bad">+81, −299</span>
+      </div>
+      <div class="prophecy-line">
+        <span class="initial">M</span>
+        <span class="text">Materials from the earth</span>
+        <span class="val neutral">+18 → 152</span>
+      </div>
+      <div class="prophecy-line">
+        <span class="initial">W</span>
+        <span class="text">Weapons from the forge</span>
+        <span class="val good">+4 → 45</span>
+      </div>
+      <div class="prophecy-line">
+        <span class="initial">S</span>
+        <span class="text">Lands revealed by scouts</span>
+        <span class="val neutral">Four hexes (mounted)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider-ornate">❦</div>
+
+  <!-- Movement -->
+  <div class="section">
+    <div class="section-title">Paths Before Us</div>
+    <div class="paths-container">
+      <div class="path-way selected">
+        <div class="path-initial">E</div>
+        <div class="path-text">
+          <div class="path-name">Eastward — the grassland road</div>
+          <div class="path-desc">One turn to Cairnfall at convoy speed. Open, exposed. Drenn scouts reported. Poor foraging.</div>
+        </div>
+      </div>
+      <div class="path-way">
+        <div class="path-initial">S</div>
+        <div class="path-text">
+          <div class="path-name">Southward — through the forest</div>
+          <div class="path-desc">Two turns via treeline. Better cover, better foraging. Avoids known Drenn tracks.</div>
+        </div>
+      </div>
+      <div class="path-way">
+        <div class="path-initial">H</div>
+        <div class="path-text">
+          <div class="path-name">Hold — remain in Harrowgate</div>
+          <div class="path-desc">Stockpile, trade, prepare. Contract deadline grows tighter.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider-ornate">❦</div>
+
+  <!-- Trade -->
+  <div class="section">
+    <div class="section-title">The Merchant's Tally</div>
+    <div class="ledger">
+      <div class="ledger-header">
+        <div class="ledger-title">Harrowgate Market</div>
+        <div class="ledger-sub">Final trade before departure</div>
+      </div>
+      <div class="ledger-line">
+        <span class="ledger-item">Sell ten trade goods</span>
+        <span class="ledger-val pos">+110 food</span>
+      </div>
+      <div class="ledger-line">
+        <span class="ledger-item">Buy three weapons</span>
+        <span class="ledger-val neg">−60 materials</span>
+      </div>
+      <div class="ledger-total">
+        <span>After this trade</span>
+        <span>288 food · 44 wpn · 74 matl</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider-ornate">❦</div>
+
+  <!-- Special Actions -->
+  <div class="section">
+    <div class="section-title">Commands Carved</div>
+    <div class="verse" data-num="I">
+      <div class="verse-label">Special Command</div>
+      <div class="verse-text">Have Gareth the blacksmith lead a focused weapons push — assign him the best materials and four other crafters. We need every warrior armed before we hit the grassland. Prioritise spears.</div>
+    </div>
+    <div class="verse" data-num="II">
+      <div class="verse-label">Special Command</div>
+      <div class="verse-text">Send four mounted scouts ahead on the direct route to Cairnfall. Ride fast, stay on the ridgeline, report by nightfall: fresh Drenn tracks? Any sign of the main warband? If clear, we march at dawn. If not, we take the forest.</div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-section">
+    <button class="seal-btn">Seal These Orders</button>
+    <div class="submit-note">Orders lock at the eighth hour · you may amend them until the seal</div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <a class="nav-item" href="#"><span class="nav-initial">R</span><span>Report</span></a>
+  <a class="nav-item" href="#"><span class="nav-initial">M</span><span>Map</span></a>
+  <a class="nav-item" href="#"><span class="nav-initial">T</span><span>Tribe</span></a>
+  <a class="nav-item active" href="#"><span class="nav-initial">O</span><span>Orders</span></a>
+  <a class="nav-item" href="#"><span class="nav-initial">W</span><span>Words</span></a>
+</div>
+
+</body>
+</html>

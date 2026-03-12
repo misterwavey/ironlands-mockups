@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Turn 75 Orders (Fantasy)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #0a0806;
+    color: #d4c5b0;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  /* Ornate header with decorative frame */
+  .header-frame {
+    background: linear-gradient(180deg, #1a1510 0%, #0a0806 100%);
+    padding: 24px 20px 32px;
+    position: relative;
+    border-bottom: 1px solid #3d3020;
+  }
+
+  .header-frame::before,
+  .header-frame::after {
+    content: '❦';
+    position: absolute;
+    font-size: 14px;
+    color: #8b6914;
+    opacity: 0.6;
+  }
+  .header-frame::before { top: 12px; left: 50%; transform: translateX(-50%); }
+  .header-frame::after { bottom: 8px; left: 50%; transform: translateX(-50%); }
+
+  .turn-number {
+    font-family: 'Cinzel Decorative', 'Cinzel', serif;
+    font-size: 42px;
+    font-weight: 700;
+    text-align: center;
+    color: #c9a227;
+    text-shadow: 0 0 20px rgba(201, 162, 39, 0.3);
+    letter-spacing: 2px;
+  }
+
+  .turn-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    text-align: center;
+    color: #8b7355;
+    margin-top: 8px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .location-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: linear-gradient(90deg, transparent 0%, rgba(61, 48, 32, 0.4) 20%, rgba(61, 48, 32, 0.4) 80%, transparent 100%);
+  }
+
+  .location-icon {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #5a4a35;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .location-text {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: #a89070;
+    letter-spacing: 1px;
+  }
+
+  .deadline-pill {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(139, 0, 0, 0.3);
+    border: 1px solid #5a2020;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: #c07070;
+    letter-spacing: 1px;
+  }
+
+  .content { padding: 0 16px 120px; }
+
+  /* Section with ornate styling */
+  .section {
+    margin-top: 28px;
+    position: relative;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .section-ornament {
+    color: #8b6914;
+    font-size: 12px;
+    opacity: 0.7;
+  }
+
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #c9a227;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, #3d3020 0%, transparent 100%);
+  }
+
+  /* Resource cards — parchment style */
+  .resources-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .resource-card {
+    background: linear-gradient(135deg, #1a1510 0%, #12100c 100%);
+    border: 1px solid #3d3020;
+    padding: 16px;
+    position: relative;
+  }
+
+  .resource-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #5a4a35 50%, transparent 100%);
+  }
+
+  .resource-card.critical {
+    border-color: #5a2020;
+    background: linear-gradient(135deg, #1a1010 0%, #120c0c 100%);
+  }
+
+  .resource-card.critical::before {
+    background: linear-gradient(90deg, transparent 0%, #8b2020 50%, transparent 100%);
+  }
+
+  .resource-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+    opacity: 0.8;
+  }
+
+  .resource-value {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #d4c5b0;
+  }
+
+  .resource-value.critical {
+    color: #c07070;
+    text-shadow: 0 0 10px rgba(192, 112, 112, 0.3);
+  }
+
+  .resource-name {
+    font-size: 12px;
+    color: #8b7355;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* People allocation — scroll style */
+  .alloc-scroll {
+    background: linear-gradient(180deg, #14100c 0%, #0c0a08 100%);
+    border: 1px solid #3d3020;
+    border-radius: 4px;
+    padding: 4px;
+  }
+
+  .alloc-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid #252018;
+  }
+
+  .alloc-item:last-child { border-bottom: none; }
+
+  .alloc-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #2a2018 0%, #1a1510 100%);
+    border: 1px solid #4a3a28;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin-right: 14px;
+  }
+
+  .alloc-info { flex: 1; }
+
+  .alloc-name {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: #b8a080;
+    letter-spacing: 1px;
+  }
+
+  .alloc-detail {
+    font-size: 12px;
+    color: #6a5a45;
+    font-style: italic;
+    margin-top: 2px;
+  }
+
+  .alloc-count {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    color: #d4c5b0;
+    min-width: 50px;
+    text-align: right;
+  }
+
+  /* Projection — prophecy style */
+  .prophecy-box {
+    background: linear-gradient(135deg, rgba(201, 162, 39, 0.1) 0%, rgba(201, 162, 39, 0.02) 100%);
+    border: 1px solid #5a4a28;
+    border-left: 3px solid #c9a227;
+    padding: 20px;
+    position: relative;
+  }
+
+  .prophecy-box::before {
+    content: '◈';
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    color: #c9a227;
+    font-size: 14px;
+    opacity: 0.5;
+  }
+
+  .prophecy-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: #c9a227;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .prophecy-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #3d3020;
+  }
+
+  .prophecy-row:last-child { border-bottom: none; }
+
+  .prophecy-label {
+    font-size: 14px;
+    color: #9a8a70;
+  }
+
+  .prophecy-val {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: #d4c5b0;
+  }
+
+  .prophecy-val.good { color: #70a070; }
+  .prophecy-val.bad { color: #c07070; }
+
+  /* Movement paths — quest style */
+  .path-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .path-card {
+    background: linear-gradient(135deg, #1a1510 0%, #12100c 100%);
+    border: 1px solid #3d3020;
+    padding: 16px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .path-card:hover {
+    border-color: #5a4a35;
+  }
+
+  .path-card.selected {
+    border-color: #c9a227;
+    background: linear-gradient(135deg, #2a2010 0%, #1a1510 100%);
+    box-shadow: 0 0 20px rgba(201, 162, 39, 0.15);
+  }
+
+  .path-card.selected::before {
+    content: '▸';
+    position: absolute;
+    left: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #c9a227;
+    color: #0a0806;
+    width: 20px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  .path-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .path-direction {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #d4c5b0;
+  }
+
+  .path-card.selected .path-direction {
+    color: #c9a227;
+  }
+
+  .path-terrain {
+    font-size: 11px;
+    color: #8b7355;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .path-details {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #6a5a45;
+  }
+
+  .path-detail {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Trade — merchant ledger */
+  .trade-ledger {
+    background: #14100c;
+    border: 1px solid #3d3020;
+    padding: 16px;
+  }
+
+  .trade-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #252018;
+    font-size: 14px;
+  }
+
+  .trade-row:last-child { border-bottom: none; }
+
+  .trade-item { color: #a89070; }
+
+  .trade-val {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+  }
+
+  .trade-val.pos { color: #70a070; }
+  .trade-val.neg { color: #c07070; }
+
+  .trade-total {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px solid #3d3020;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: #c9a227;
+  }
+
+  /* Commands — scroll of decree */
+  .decree-scroll {
+    background: linear-gradient(180deg, #181410 0%, #100c08 100%);
+    border: 1px solid #4a3a28;
+    border-radius: 2px;
+    padding: 20px;
+    position: relative;
+  }
+
+  .decree-scroll::before,
+  .decree-scroll::after {
+    content: '❧';
+    position: absolute;
+    font-size: 16px;
+    color: #5a4a35;
+  }
+  .decree-scroll::before { top: 8px; left: 12px; }
+  .decree-scroll::after { bottom: 8px; right: 12px; transform: rotate(180deg); }
+
+  .decree-item {
+    padding: 16px 0;
+    border-bottom: 1px dashed #3d3020;
+  }
+
+  .decree-item:first-child { padding-top: 8px; }
+  .decree-item:last-child { border-bottom: none; padding-bottom: 8px; }
+
+  .decree-number {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: #8b6914;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .decree-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #c8b8a0;
+    font-style: italic;
+  }
+
+  /* Submit — grand button */
+  .submit-section {
+    margin-top: 32px;
+    text-align: center;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(135deg, #2a2010 0%, #1a1510 100%);
+    border: 2px solid #c9a227;
+    color: #c9a227;
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+  }
+
+  .submit-btn::before,
+  .submit-btn::after {
+    content: '◆';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    opacity: 0.6;
+  }
+  .submit-btn::before { left: 20px; }
+  .submit-btn::after { right: 20px; }
+
+  .submit-btn:hover {
+    background: linear-gradient(135deg, #3a3020 0%, #2a2010 100%);
+    box-shadow: 0 0 30px rgba(201, 162, 39, 0.2);
+  }
+
+  .submit-note {
+    font-size: 12px;
+    color: #6a5a45;
+    font-style: italic;
+    margin-top: 12px;
+  }
+
+  /* Bottom nav — runic style */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 390px;
+    background: linear-gradient(180deg, #12100c 0%, #0a0806 100%);
+    border-top: 2px solid #3d3020;
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0 28px;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    padding: 8px 12px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+  }
+
+  .nav-item:hover { opacity: 0.8; }
+  .nav-item.active { opacity: 1; }
+
+  .nav-icon {
+    font-size: 20px;
+  }
+
+  .nav-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #8b7355;
+  }
+
+  .nav-item.active .nav-label {
+    color: #c9a227;
+  }
+
+  /* Decorative flourishes */
+  .flourish {
+    text-align: center;
+    color: #5a4a35;
+    font-size: 14px;
+    letter-spacing: 8px;
+    margin: 24px 0;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="header-frame">
+  <div class="deadline-pill">⚔ 11h 46m</div>
+  <div class="turn-number">LXXV</div>
+  <div class="turn-subtitle">The Seventy-Fifth Turning</div>
+  <div class="location-banner">
+    <div class="location-icon">⌂</div>
+    <div class="location-text">Harrowgate · Winter draws near</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-ornament">❧</span>
+      <span class="section-title">The Tribe's Stores</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="resources-grid">
+      <div class="resource-card">
+        <div class="resource-icon">⚔</div>
+        <div class="resource-value">299</div>
+        <div class="resource-name">Souls</div>
+      </div>
+      <div class="resource-card critical">
+        <div class="resource-icon">⚑</div>
+        <div class="resource-value critical">178</div>
+        <div class="resource-name">Provisions</div>
+      </div>
+      <div class="resource-card">
+        <div class="resource-icon">◈</div>
+        <div class="resource-value">134</div>
+        <div class="resource-name">Materials</div>
+      </div>
+      <div class="resource-card">
+        <div class="resource-icon">✦</div>
+        <div class="resource-value">58</div>
+        <div class="resource-name">Tools</div>
+      </div>
+      <div class="resource-card">
+        <div class="resource-icon">⚔</div>
+        <div class="resource-value">41</div>
+        <div class="resource-name">Arms</div>
+      </div>
+      <div class="resource-card">
+        <div class="resource-icon">◎</div>
+        <div class="resource-value">17</div>
+        <div class="resource-name">Trade</div>
+      </div>
+      <div class="resource-card">
+        <div class="resource-icon">⚘</div>
+        <div class="resource-value">22</div>
+        <div class="resource-name">Livestock</div>
+      </div>
+      <div class="resource-card">
+        <div class="resource-icon">♞</div>
+        <div class="resource-value">8</div>
+        <div class="resource-name">Mounts</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-ornament">❧</span>
+      <span class="section-title">The People's Labour</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="alloc-scroll">
+      <div class="alloc-item">
+        <div class="alloc-icon">🌾</div>
+        <div class="alloc-info">
+          <div class="alloc-name">Gatherers</div>
+          <div class="alloc-detail">Hunt and forage for the tribe's sustenance</div>
+        </div>
+        <div class="alloc-count">135</div>
+      </div>
+      <div class="alloc-item">
+        <div class="alloc-icon">⚒</div>
+        <div class="alloc-info">
+          <div class="alloc-name">Crafters</div>
+          <div class="alloc-detail">Forge weapons and mend what breaks</div>
+        </div>
+        <div class="alloc-count">60</div>
+      </div>
+      <div class="alloc-item">
+        <div class="alloc-icon">👁</div>
+        <div class="alloc-info">
+          <div class="alloc-name">Scouts</div>
+          <div class="alloc-detail">Eight ride swift mounts ahead</div>
+        </div>
+        <div class="alloc-count">45</div>
+      </div>
+      <div class="alloc-item">
+        <div class="alloc-icon">🛡</div>
+        <div class="alloc-info">
+          <div class="alloc-name">Warriors</div>
+          <div class="alloc-detail">Forty-one stand armed and ready</div>
+        </div>
+        <div class="alloc-count">59</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-ornament">❧</span>
+      <span class="section-title">The Seer's Vision</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="prophecy-box">
+      <div class="prophecy-title">If the tribe marches east...</div>
+      <div class="prophecy-row">
+        <span class="prophecy-label">New births among the people</span>
+        <span class="prophecy-val good">+3 souls</span>
+      </div>
+      <div class="prophecy-row">
+        <span class="prophecy-label">Provisions gathered and consumed</span>
+        <span class="prophecy-val bad">+81, −299</span>
+      </div>
+      <div class="prophecy-row">
+        <span class="prophecy-label">Materials gleaned from the land</span>
+        <span class="prophecy-val">+18 stores</span>
+      </div>
+      <div class="prophecy-row">
+        <span class="prophecy-label">Arms forged by willing hands</span>
+        <span class="prophecy-val good">+4 weapons</span>
+      </div>
+      <div class="prophecy-row">
+        <span class="prophecy-label">Lands revealed by scouting</span>
+        <span class="prophecy-val">4 hexes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-ornament">❧</span>
+      <span class="section-title">Paths of March</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="path-options">
+      <div class="path-card selected">
+        <div class="path-header">
+          <span class="path-direction">Eastward</span>
+          <span class="path-terrain">— Open Grassland</span>
+        </div>
+        <div class="path-details">
+          <span class="path-detail">⏱ One turning</span>
+          <span class="path-detail">⚠ Exposed to foe</span>
+          <span class="path-detail">🌾 Poor foraging</span>
+        </div>
+      </div>
+      <div class="path-card">
+        <div class="path-header">
+          <span class="path-direction">Southward</span>
+          <span class="path-terrain">— Deep Forest</span>
+        </div>
+        <div class="path-details">
+          <span class="path-detail">⏱ Two turnings</span>
+          <span class="path-detail">🛡 Cover from eyes</span>
+          <span class="path-detail">🌾 Rich foraging</span>
+        </div>
+      </div>
+      <div class="path-card">
+        <div class="path-header">
+          <span class="path-direction">Make Camp</span>
+          <span class="path-terrain">— Hold Position</span>
+        </div>
+        <div class="path-details">
+          <span class="path-detail">⏱ Indefinite</span>
+          <span class="path-detail">📦 Stockpile stores</span>
+          <span class="path-detail">⚠ Cairnfall waits</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-ornament">❧</span>
+      <span class="section-title">Bargain with Cairnfall</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="trade-ledger">
+      <div class="trade-row">
+        <span class="trade-item">Ten trade goods bartered away</span>
+        <span class="trade-val pos">+110 provisions</span>
+      </div>
+      <div class="trade-row">
+        <span class="trade-item">Three weapons purchased</span>
+        <span class="trade-val neg">−60 materials</span>
+      </div>
+      <div class="trade-total">
+        <span>Tribe shall hold:</span>
+        <span>288 food · 44 arms · 74 matl</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-ornament">❧</span>
+      <span class="section-title">Decrees of the Chief</span>
+      <span class="section-line"></span>
+    </div>
+    <div class="decree-scroll">
+      <div class="decree-item">
+        <div class="decree-number">First Decree</div>
+        <div class="decree-text">Let Gareth lead a weapons push. Assign the finest materials and four skilled crafters. Spears shall be our priority.</div>
+      </div>
+      <div class="decree-item">
+        <div class="decree-number">Second Decree</div>
+        <div class="decree-text">Send four mounted scouts ahead to Cairnfall. They shall report by nightfall: Drenn tracks? Signs of warbands?</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flourish">❦ ❦ ❦</div>
+
+  <div class="submit-section">
+    <button class="submit-btn">Seal the Orders</button>
+    <div class="submit-note">The hourglass empties at the eighth bell</div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <a class="nav-item" href="#">
+    <span class="nav-icon">📜</span>
+    <span class="nav-label">Report</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">🗺</span>
+    <span class="nav-label">Map</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">⚔</span>
+    <span class="nav-label">Tribe</span>
+  </a>
+  <a class="nav-item active" href="#">
+    <span class="nav-icon">✦</span>
+    <span class="nav-label">Orders</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">✉</span>
+    <span class="nav-label">Words</span>
+  </a>
+</div>
+
+</body>
+</html>

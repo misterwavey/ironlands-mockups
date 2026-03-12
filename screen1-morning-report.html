@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Morning Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #0a0c10;
+    color: #e8e0d4;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+  }
+  .status-bar .time { font-size: 15px; color: #ccc; }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .status-icons span { font-size: 11px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 16px 24px 20px;
+    border-bottom: 1px solid rgba(193, 167, 120, 0.15);
+  }
+  .header .game-title {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #c1a778;
+    margin-bottom: 4px;
+  }
+  .header .turn-info {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #f0e6d6;
+    margin-bottom: 2px;
+  }
+  .header .clan-name {
+    font-family: 'EB Garamond', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: #9a917f;
+  }
+
+  /* Season banner */
+  .season-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(193, 120, 50, 0.12), rgba(180, 100, 30, 0.06));
+    border-top: 1px solid rgba(193, 120, 50, 0.2);
+    border-bottom: 1px solid rgba(193, 120, 50, 0.2);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #c1a778;
+  }
+  .season-banner .icon { font-size: 14px; }
+
+  /* Content */
+  .content {
+    padding: 20px 24px;
+  }
+
+  /* Overview section */
+  .section {
+    margin-bottom: 24px;
+  }
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c1a778;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(193, 167, 120, 0.3), transparent);
+  }
+
+  .narrative {
+    font-size: 16.5px;
+    line-height: 1.65;
+    color: #ddd5c7;
+  }
+  .narrative em {
+    color: #c1a778;
+    font-style: italic;
+  }
+  .narrative strong {
+    color: #f0e6d6;
+    font-weight: 600;
+  }
+
+  /* Event cards */
+  .event-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(193, 167, 120, 0.12);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .event-card .event-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .event-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .event-icon.movement { background: rgba(100, 180, 255, 0.15); }
+  .event-icon.economy { background: rgba(120, 200, 80, 0.15); }
+  .event-icon.diplomacy { background: rgba(200, 160, 60, 0.15); }
+  .event-icon.special { background: rgba(180, 100, 220, 0.15); }
+  .event-icon.warning { background: rgba(220, 80, 60, 0.15); }
+  .event-icon.world { background: rgba(100, 200, 200, 0.15); }
+
+  .event-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e8e0d4;
+  }
+  .event-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #7a7468;
+  }
+  .event-body {
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: #b8b0a2;
+  }
+  .event-body strong { color: #ddd5c7; }
+
+  /* Discovery highlight */
+  .discovery {
+    border-left: 3px solid #c1a778;
+    background: rgba(193, 167, 120, 0.06);
+  }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
+  .tag.success { background: rgba(120, 200, 80, 0.15); color: #78c850; }
+  .tag.partial { background: rgba(200, 160, 60, 0.15); color: #c8a03c; }
+  .tag.alert { background: rgba(220, 80, 60, 0.15); color: #dc503c; }
+  .tag.discovery { background: rgba(180, 100, 220, 0.15); color: #b464dc; }
+
+  /* Resource bar */
+  .resource-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(193, 167, 120, 0.12);
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+  .resource-item {
+    text-align: center;
+    flex: 1;
+  }
+  .resource-value {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #f0e6d6;
+  }
+  .resource-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: #7a7468;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .resource-delta {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: #78c850;
+  }
+  .resource-delta.negative { color: #dc503c; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 390px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0 28px;
+    background: linear-gradient(to top, #0a0c10 60%, transparent);
+    border-top: 1px solid rgba(193, 167, 120, 0.1);
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: #5a5448;
+    text-decoration: none;
+  }
+  .nav-item.active { color: #c1a778; }
+  .nav-icon { font-size: 20px; }
+  .nav-badge {
+    position: relative;
+  }
+  .nav-badge::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -6px;
+    width: 7px;
+    height: 7px;
+    background: #dc503c;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span class="time">7:42</span>
+  <div class="status-icons">
+    <span>📶</span>
+    <span>🔋</span>
+  </div>
+</div>
+
+<div class="header">
+  <div class="game-title">Ironlands</div>
+  <div class="turn-info">Turn 47 — Day of the Amber Moon</div>
+  <div class="clan-name">Clan Ashenmoor · Chief Brennan</div>
+</div>
+
+<div class="season-banner">
+  <span class="icon">🍂</span>
+  <span>Late Autumn · First frost in 8 days · Winter preparations recommended</span>
+</div>
+
+<div class="content">
+
+  <!-- Overview -->
+  <div class="section">
+    <div class="section-label">Overview</div>
+    <p class="narrative">
+      Your scouts have returned from the eastern ridgeline with troubling news. The <strong>Drenn Confederacy</strong> has moved a warband to within three hexes of your northern village. Meanwhile, your copper mine produced a <em>record yield</em>, and the trader envoy from <strong>Saltmere</strong> arrived with an interesting proposal…
+    </p>
+  </div>
+
+  <!-- Resource snapshot -->
+  <div class="resource-bar">
+    <div class="resource-item">
+      <div class="resource-value">847</div>
+      <div class="resource-label">Food</div>
+      <div class="resource-delta negative">36 days</div>
+    </div>
+    <div class="resource-item">
+      <div class="resource-value">203</div>
+      <div class="resource-label">Copper</div>
+      <div class="resource-delta">+18</div>
+    </div>
+    <div class="resource-item">
+      <div class="resource-value">284</div>
+      <div class="resource-label">People</div>
+      <div class="resource-delta">+2</div>
+    </div>
+    <div class="resource-item">
+      <div class="resource-value">41</div>
+      <div class="resource-label">Warriors</div>
+      <div class="resource-delta">—</div>
+    </div>
+  </div>
+
+  <!-- Movement -->
+  <div class="section">
+    <div class="section-label">Movement</div>
+
+    <div class="event-card">
+      <div class="event-header">
+        <div class="event-icon movement">⚔️</div>
+        <div>
+          <div class="event-title">Iron Wolves → Hex 3142</div>
+          <div class="event-subtitle">Forested hill · Warband movement</div>
+        </div>
+      </div>
+      <div class="event-body">
+        Encountered wild boar in the valley clearing. Hunting opportunity noted for next turn.
+      </div>
+    </div>
+
+    <div class="event-card discovery">
+      <div class="event-header">
+        <div class="event-icon special">🔮</div>
+        <div>
+          <div class="event-title">Scout Unit → Hex 3244</div>
+          <div class="event-subtitle">Mountain pass · Discovery</div>
+        </div>
+      </div>
+      <div class="event-body">
+        Ancient carved waymarkers found along the ridge. Possible trail leading to an <strong>unknown valley beyond the mountains</strong>. Further exploration required.
+      </div>
+      <span class="tag discovery">New Discovery</span>
+    </div>
+  </div>
+
+  <!-- Diplomacy -->
+  <div class="section">
+    <div class="section-label">Diplomacy</div>
+
+    <div class="event-card">
+      <div class="event-header">
+        <div class="event-icon diplomacy">🤝</div>
+        <div>
+          <div class="event-title">Envoy from Saltmere</div>
+          <div class="event-subtitle">NPC City · Neutral → Warming</div>
+        </div>
+      </div>
+      <div class="event-body">
+        Offers regular <strong>grain shipments</strong> in exchange for copper and military protection from sea raiders. Trade deal awaiting your response.
+      </div>
+      <span class="tag partial">Requires Response</span>
+    </div>
+
+    <div class="event-card">
+      <div class="event-header">
+        <div class="event-icon diplomacy">✉️</div>
+        <div>
+          <div class="event-title">Message from Clan Thornwall</div>
+          <div class="event-subtitle">Player · Alliance potential</div>
+        </div>
+      </div>
+      <div class="event-body">
+        <em>"We've seen Drenn scouts near your borders too. Perhaps we should talk."</em>
+      </div>
+    </div>
+  </div>
+
+  <!-- Special Actions -->
+  <div class="section">
+    <div class="section-label">Special Actions</div>
+
+    <div class="event-card">
+      <div class="event-header">
+        <div class="event-icon special">🦅</div>
+        <div>
+          <div class="event-title">Falcon Training</div>
+          <div class="event-subtitle">Partial success</div>
+        </div>
+      </div>
+      <div class="event-body">
+        Your falconer captured two young birds from the cliff nests. Training will take ~10 turns. Once trained: <strong>+food gathering, +scouting range</strong>.
+      </div>
+      <span class="tag partial">Partial Success</span>
+    </div>
+  </div>
+
+  <!-- World Events -->
+  <div class="section">
+    <div class="section-label">World Events</div>
+
+    <div class="event-card">
+      <div class="event-header">
+        <div class="event-icon warning">🔥</div>
+        <div>
+          <div class="event-title">Great Fire to the East</div>
+          <div class="event-subtitle">Rumour · Merchant report</div>
+        </div>
+      </div>
+      <div class="event-body">
+        A great fire has consumed the forest two provinces east. Refugees may be heading this way — opportunity or threat.
+      </div>
+      <span class="tag alert">Potential Threat</span>
+    </div>
+  </div>
+
+  <!-- Spacer for nav -->
+  <div style="height: 80px;"></div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+  <a class="nav-item active" href="#">
+    <span class="nav-icon">📜</span>
+    <span>Report</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">🗺️</span>
+    <span>Map</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">⚙️</span>
+    <span>Orders</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">🏰</span>
+    <span>Clan</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon nav-badge">💬</span>
+    <span>Messages</span>
+  </a>
+</div>
+
+</body>
+</html>

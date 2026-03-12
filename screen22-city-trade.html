@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Ashford Market</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #0a0c10;
+    color: #e8e0d4;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+  }
+  .status-bar .time { font-size: 15px; color: #ccc; }
+
+  .header {
+    text-align: center;
+    padding: 16px 24px 24px;
+    border-bottom: 1px solid rgba(193, 167, 120, 0.15);
+    background: linear-gradient(180deg, rgba(193, 167, 120, 0.08) 0%, rgba(193, 167, 120, 0.02) 50%, transparent 100%);
+  }
+  .city-illustration {
+    width: 200px;
+    height: 100px;
+    margin: 0 auto 16px;
+    opacity: 0.7;
+  }
+  .city-illustration svg {
+    width: 100%;
+    height: 100%;
+  }
+  .header .game-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #8a7a5a;
+    margin-bottom: 8px;
+  }
+  .header .settlement-name {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #e8d8b8;
+    text-shadow: 0 2px 12px rgba(193, 167, 120, 0.3);
+  }
+  .header .settlement-type {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: #b8a888;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .header .settlement-type::before {
+    content: '◆';
+    color: #c1a778;
+    font-size: 8px;
+  }
+  .header .settlement-type::after {
+    content: '◆';
+    color: #c1a778;
+    font-size: 8px;
+  }
+  .header .city-details {
+    font-family: 'EB Garamond', serif;
+    font-size: 13px;
+    color: #9a8a6a;
+    font-style: italic;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .header .faction {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(122, 138, 106, 0.15);
+    border: 1px solid rgba(122, 138, 106, 0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: #9aaa8a;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 14px;
+  }
+  .header .faction::before {
+    content: '▲';
+    color: #7a8a6a;
+  }
+
+  .content {
+    padding: 20px 24px 120px;
+  }
+
+  .section {
+    margin-bottom: 28px;
+  }
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c1a778;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(193, 167, 120, 0.2);
+  }
+
+  .coin-display {
+    background: linear-gradient(135deg, rgba(193, 167, 120, 0.15) 0%, rgba(193, 167, 120, 0.05) 100%);
+    border: 1px solid rgba(193, 167, 120, 0.25);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .coin-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #9a917f;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .coin-amount {
+    font-family: 'Cinzel', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #c1a778;
+  }
+  .coin-amount span {
+    font-size: 14px;
+    color: #9a917f;
+    margin-left: 4px;
+  }
+
+  .price-table {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .price-row {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .price-row:last-child { border-bottom: none; }
+  .price-row.header-row {
+    background: rgba(193, 167, 120, 0.08);
+    padding: 10px 16px;
+  }
+  .price-row.header-row .item-name,
+  .price-row.header-row .price {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #9a917f;
+  }
+  .item-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-right: 12px;
+  }
+  .item-name {
+    flex: 1;
+    font-family: 'EB Garamond', serif;
+    font-size: 15px;
+    color: #e8e0d4;
+  }
+  .item-stock {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #7a8a6a;
+    margin-right: 16px;
+  }
+  .item-stock.low { color: #8a6a6a; }
+  .price {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    color: #c1a778;
+    min-width: 60px;
+    text-align: right;
+  }
+  .price.trend-up { color: #8a9a7a; }
+  .price.trend-down { color: #9a7a7a; }
+
+  .jobs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .job-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .job-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(193, 167, 120, 0.2);
+  }
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .job-title {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #f0e6d6;
+  }
+  .job-reward {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: #c1a778;
+  }
+  .job-desc {
+    font-family: 'EB Garamond', serif;
+    font-size: 14px;
+    color: #b8b0a2;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+  .job-meta {
+    display: flex;
+    gap: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #7a7468;
+  }
+  .job-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .relations-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(122, 138, 106, 0.15);
+    border: 1px solid rgba(122, 138, 106, 0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: #9aaa8a;
+  }
+
+  .trade-btn {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    right: 24px;
+    background: linear-gradient(135deg, #c1a778 0%, #a08050 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0a0c10;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(193, 167, 120, 0.3);
+  }
+</style>
+</head>
+<body>
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>LTE</span>
+  </div>
+
+  <div class="header">
+    <div class="city-illustration">
+      <svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Ground/horizon -->
+        <line x1="10" y1="85" x2="190" y2="85" stroke="#5a4a3a" stroke-width="1.5" opacity="0.6"/>
+        
+        <!-- Outer wall left -->
+        <line x1="20" y1="85" x2="20" y2="55" stroke="#8a7a6a" stroke-width="2"/>
+        <line x1="20" y1="55" x2="35" y2="50" stroke="#8a7a6a" stroke-width="1.5"/>
+        
+        <!-- Outer wall right -->
+        <line x1="180" y1="85" x2="180" y2="55" stroke="#8a7a6a" stroke-width="2"/>
+        <line x1="180" y1="55" x2="165" y2="50" stroke="#8a7a6a" stroke-width="1.5"/>
+        
+        <!-- Main gate towers -->
+        <rect x="85" y="45" width="12" height="40" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
+        <rect x="103" y="45" width="12" height="40" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
+        <line x1="85" y1="45" x2="91" y2="38" stroke="#9a8a7a" stroke-width="1.5"/>
+        <line x1="97" y1="45" x2="91" y2="38" stroke="#9a8a7a" stroke-width="1.5"/>
+        <line x1="103" y1="45" x2="109" y2="38" stroke="#9a8a7a" stroke-width="1.5"/>
+        <line x1="115" y1="45" x2="109" y2="38" stroke="#9a8a7a" stroke-width="1.5"/>
+        
+        <!-- Gate arch -->
+        <path d="M 97 85 Q 100 70 103 85" fill="none" stroke="#7a6a5a" stroke-width="2"/>
+        
+        <!-- Left tower -->
+        <rect x="40" y="35" width="18" height="50" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
+        <polygon points="40,35 49,22 58,35" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
+        <line x1="45" y1="45" x2="45" y2="55" stroke="#7a6a5a" stroke-width="1"/>
+        <line x1="53" y1="45" x2="53" y2="55" stroke="#7a6a5a" stroke-width="1"/>
+        
+        <!-- Right tower -->
+        <rect x="142" y="35" width="18" height="50" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
+        <polygon points="142,35 151,22 160,35" fill="none" stroke="#9a8a7a" stroke-width="1.5"/>
+        <line x1="147" y1="45" x2="147" y2="55" stroke="#7a6a5a" stroke-width="1"/>
+        <line x1="155" y1="45" x2="155" y2="55" stroke="#7a6a5a" stroke-width="1"/>
+        
+        <!-- Central keep -->
+        <rect x="75" y="25" width="20" height="35" fill="none" stroke="#a09080" stroke-width="2"/>
+        <polygon points="75,25 85,12 95,25" fill="none" stroke="#a09080" stroke-width="2"/>
+        <rect x="82" y="32" width="6" height="8" fill="none" stroke="#7a6a5a" stroke-width="1"/>
+        
+        <!-- Secondary buildings -->
+        <rect x="62" y="50" width="12" height="25" fill="none" stroke="#8a7a6a" stroke-width="1"/>
+        <polygon points="62,50 68,42 74,50" fill="none" stroke="#8a7a6a" stroke-width="1"/>
+        
+        <rect x="126" y="48" width="14" height="27" fill="none" stroke="#8a7a7a" stroke-width="1"/>
+        <polygon points="126,48 133,40 140,48" fill="none" stroke="#8a7a7a" stroke-width="1"/>
+        
+        <!-- Wall crenellations -->
+        <line x1="35" y1="50" x2="40" y2="50" stroke="#8a7a6a" stroke-width="1.5"/>
+        <line x1="58" y1="50" x2="62" y2="50" stroke="#8a7a6a" stroke-width="1.5"/>
+        <line x1="74" y1="50" x2="75" y2="50" stroke="#8a7a6a" stroke-width="1.5"/>
+        <line x1="95" y1="50" x2="103" y2="50" stroke="#8a7a6a" stroke-width="1.5"/>
+        <line x1="115" y1="50" x2="126" y2="50" stroke="#8a7a6a" stroke-width="1.5"/>
+        <line x1="140" y1="50" x2="142" y2="50" stroke="#8a7a6a" stroke-width="1.5"/>
+        <line x1="160" y1="50" x2="165" y2="50" stroke="#8a7a6a" stroke-width="1.5"/>
+        
+        <!-- Flags/banners -->
+        <line x1="49" y1="22" x2="49" y2="12" stroke="#7a8a6a" stroke-width="1"/>
+        <path d="M 49 12 L 60 16 L 49 20" fill="none" stroke="#7a8a6a" stroke-width="1"/>
+        
+        <line x1="151" y1="22" x2="151" y2="12" stroke="#7a8a6a" stroke-width="1"/>
+        <path d="M 151 12 L 162 16 L 151 20" fill="none" stroke="#7a8a6a" stroke-width="1"/>
+        
+        <!-- Smoke from chimneys -->
+        <path d="M 70 42 Q 68 35 72 30" fill="none" stroke="#6a6a6a" stroke-width="1" opacity="0.5"/>
+        <path d="M 130 40 Q 132 33 128 28" fill="none" stroke="#6a6a6a" stroke-width="1" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="game-title">Ironlands</div>
+    <div class="settlement-name">Ashford</div>
+    <div class="settlement-type">Walled City · Population ~2,400</div>
+    <div class="city-details">Trade hub of the Thornwood Alliance. Known for ironwork and limestone quarries. The great market fills the square below the keep each dawn.</div>
+    <div class="faction">Thornwood Alliance</div>
+  </div>
+
+  <div class="content">
+    <div class="coin-display">
+      <span class="coin-label">Your Coin</span>
+      <span class="coin-amount">247<span>◈</span></span>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Market Prices</div>
+      <div class="price-table">
+        <div class="price-row header-row">
+          <span class="item-icon" style="visibility:hidden">◈</span>
+          <span class="item-name">Item</span>
+          <span class="item-stock" style="visibility:hidden">Stock</span>
+          <span class="price" style="color:#9a917f">Buy</span>
+          <span class="price" style="color:#9a917f">Sell</span>
+        </div>
+        <div class="price-row">
+          <span class="item-icon">🍖</span>
+          <span class="item-name">Food</span>
+          <span class="item-stock">High</span>
+          <span class="price trend-down">2◈</span>
+          <span class="price">1◈</span>
+        </div>
+        <div class="price-row">
+          <span class="item-icon">⚒️</span>
+          <span class="item-name">Materials</span>
+          <span class="item-stock low">Low</span>
+          <span class="price trend-up">8◈</span>
+          <span class="price">5◈</span>
+        </div>
+        <div class="price-row">
+          <span class="item-icon">🔧</span>
+          <span class="item-name">Tools</span>
+          <span class="item-stock">Med</span>
+          <span class="price">15◈</span>
+          <span class="price">10◈</span>
+        </div>
+        <div class="price-row">
+          <span class="item-icon">⚔️</span>
+          <span class="item-name">Weapons</span>
+          <span class="item-stock">Med</span>
+          <span class="price">25◈</span>
+          <span class="price">18◈</span>
+        </div>
+        <div class="price-row">
+          <span class="item-icon">💎</span>
+          <span class="item-name">Trade Goods</span>
+          <span class="item-stock">High</span>
+          <span class="price trend-down">—</span>
+          <span class="price trend-up">35◈</span>
+        </div>
+        <div class="price-row">
+          <span class="item-icon">🐎</span>
+          <span class="item-name">Mounts</span>
+          <span class="item-stock low">Rare</span>
+          <span class="price trend-up">80◈</span>
+          <span class="price">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Available Jobs</div>
+      <div class="jobs-list">
+        <div class="job-card">
+          <div class="job-header">
+            <span class="job-title">Quarry Labour</span>
+            <span class="job-reward">120◈</span>
+          </div>
+          <div class="job-desc">Lend 20 people for 3 turns to work the limestone quarries. They'll return with experience in stonecraft.</div>
+          <div class="job-meta">
+            <span>👥 20 people</span>
+            <span>⏱ 3 turns</span>
+            <span>⚒️ +15 materials</span>
+          </div>
+        </div>
+        <div class="job-card">
+          <div class="job-header">
+            <span class="job-title">Caravan Escort</span>
+            <span class="job-reward">200◈</span>
+          </div>
+          <div class="job-desc">Guard a merchant caravan to Saltmere. Dangerous route—raiders active in the Blackwood.</div>
+          <div class="job-meta">
+            <span>⚔️ 10+ warriors</span>
+            <span>⏱ 4 turns</span>
+            <span>🎲 Risk: High</span>
+          </div>
+        </div>
+        <div class="job-card">
+          <div class="job-header">
+            <span class="job-title">Wolf Bounty</span>
+            <span class="job-reward">150◈</span>
+          </div>
+          <div class="job-desc">The Iron Wolves have been raiding outlying farms. Bring proof of their defeat.</div>
+          <div class="job-meta">
+            <span>⚔️ Combat required</span>
+            <span>🐺 Target: Iron Wolves</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Relations</div>
+      <div class="relations-badge">
+        <span>●</span> Warm — Trading bonus active
+      </div>
+    </div>
+  </div>
+
+  <button class="trade-btn">Open Trade</button>
+</body>
+</html>

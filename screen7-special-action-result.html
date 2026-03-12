@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Special Action Result</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #0a0c10;
+    color: #e8e0d4;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #999;
+  }
+  .status-bar .time { font-size: 15px; color: #ccc; }
+
+  /* Top bar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 14px;
+    border-bottom: 1px solid rgba(193, 167, 120, 0.12);
+  }
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #c1a778;
+    cursor: pointer;
+  }
+  .back-btn .arrow { font-size: 18px; }
+  .top-title {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f0e6d6;
+  }
+  .turn-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: #7a7468;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  /* Result header */
+  .result-header {
+    text-align: center;
+    padding: 24px 0 20px;
+  }
+  .result-icon-ring {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    position: relative;
+  }
+  .result-icon-ring.partial-success {
+    background: linear-gradient(135deg, rgba(200, 160, 60, 0.15), rgba(120, 200, 80, 0.08));
+    border: 2px solid rgba(200, 160, 60, 0.35);
+    box-shadow: 0 0 30px rgba(200, 160, 60, 0.12);
+  }
+  .result-verdict {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #c8a03c;
+    margin-bottom: 4px;
+  }
+  .result-subtitle {
+    font-family: 'EB Garamond', serif;
+    font-size: 14px;
+    color: #7a7468;
+    font-style: italic;
+  }
+
+  /* Outcome meter */
+  .outcome-meter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(193, 167, 120, 0.08);
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .meter-labels {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 10px;
+    color: #5a5448;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .meter-bar-container { flex: 1; }
+  .meter-bar {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .meter-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(to right, #dc503c 0%, #c8a03c 40%, #78c850 100%);
+    width: 100%;
+  }
+  .meter-marker {
+    position: absolute;
+    top: -3px;
+    left: 68%;
+    width: 4px;
+    height: 14px;
+    background: #f0e6d6;
+    border-radius: 2px;
+    box-shadow: 0 0 6px rgba(240, 230, 214, 0.5);
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 24px;
+  }
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c1a778;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, rgba(193, 167, 120, 0.3), transparent);
+  }
+
+  /* Your action recap */
+  .action-recap {
+    background: rgba(180, 100, 220, 0.04);
+    border: 1px solid rgba(180, 100, 220, 0.12);
+    border-left: 3px solid rgba(180, 100, 220, 0.4);
+    border-radius: 0 12px 12px 0;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .action-recap-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #b464dc;
+    margin-bottom: 6px;
+  }
+  .action-recap-text {
+    font-family: 'EB Garamond', serif;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: #9a8aaa;
+    font-style: italic;
+  }
+
+  /* Narrative result */
+  .narrative-block {
+    font-family: 'EB Garamond', serif;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #ddd5c7;
+    margin-bottom: 16px;
+  }
+  .narrative-block em { color: #c1a778; font-style: italic; }
+  .narrative-block strong { color: #f0e6d6; font-weight: 600; }
+  .narrative-block .highlight {
+    color: #c8a03c;
+  }
+
+  /* Consequence cards */
+  .consequence-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(193, 167, 120, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .consequence-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .consequence-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .consequence-icon.gain { background: rgba(120, 200, 80, 0.12); }
+  .consequence-icon.loss { background: rgba(220, 80, 60, 0.12); }
+  .consequence-icon.discovery { background: rgba(180, 100, 220, 0.12); }
+  .consequence-icon.info { background: rgba(100, 180, 255, 0.12); }
+  .consequence-icon.diplo { background: rgba(200, 160, 60, 0.12); }
+
+  .consequence-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e8e0d4;
+  }
+  .consequence-detail {
+    font-size: 11px;
+    color: #7a7468;
+  }
+  .consequence-body {
+    font-family: 'EB Garamond', serif;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: #b8b0a2;
+  }
+  .consequence-body strong { color: #ddd5c7; }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
+  .tag.gain { background: rgba(120, 200, 80, 0.12); color: #78c850; }
+  .tag.loss { background: rgba(220, 80, 60, 0.12); color: #dc503c; }
+  .tag.discovery { background: rgba(180, 100, 220, 0.12); color: #b464dc; }
+  .tag.info { background: rgba(100, 180, 255, 0.12); color: #64b4ff; }
+  .tag.pending { background: rgba(200, 160, 60, 0.12); color: #c8a03c; }
+
+  /* Discovery highlight card */
+  .discovery-card {
+    background: rgba(180, 100, 220, 0.05);
+    border: 1px solid rgba(180, 100, 220, 0.2);
+    border-left: 3px solid #b464dc;
+    border-radius: 0 12px 12px 0;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .discovery-card .consequence-header { margin-bottom: 10px; }
+  .discovery-title {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #d4c0e4;
+  }
+  .discovery-body {
+    font-family: 'EB Garamond', serif;
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: #c4b8d4;
+  }
+  .discovery-body em { color: #b464dc; }
+  .discovery-body strong { color: #e8daf0; }
+
+  /* Dice / factors breakdown */
+  .factors-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(193, 167, 120, 0.08);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .factors-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #7a7468;
+    margin-bottom: 10px;
+  }
+  .factor-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  }
+  .factor-row:last-child { border: none; }
+  .factor-name {
+    font-size: 13px;
+    color: #b8b0a2;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .factor-name .emoji { font-size: 14px; }
+  .factor-value {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .factor-value.positive { color: #78c850; }
+  .factor-value.negative { color: #dc503c; }
+  .factor-value.neutral { color: #c8a03c; }
+  .factor-divider {
+    height: 1px;
+    background: rgba(193, 167, 120, 0.15);
+    margin: 4px 0;
+  }
+  .factor-total {
+    font-weight: 700;
+    color: #f0e6d6;
+  }
+
+  /* Follow-up prompt */
+  .followup-box {
+    background: rgba(193, 167, 120, 0.05);
+    border: 1px solid rgba(193, 167, 120, 0.15);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .followup-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #c1a778;
+    margin-bottom: 8px;
+  }
+  .followup-text {
+    font-family: 'EB Garamond', serif;
+    font-size: 15px;
+    line-height: 1.55;
+    color: #b8b0a2;
+  }
+  .followup-text strong { color: #d4c8b8; }
+  .followup-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .followup-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+  }
+  .followup-btn.primary {
+    background: linear-gradient(135deg, #c1a778, #a08858);
+    color: #0a0c10;
+  }
+  .followup-btn.secondary {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(193, 167, 120, 0.15);
+    color: #b8b0a2;
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 390px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0 28px;
+    background: linear-gradient(to top, #0a0c10 60%, transparent);
+    border-top: 1px solid rgba(193, 167, 120, 0.1);
+    z-index: 60;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: #5a5448;
+    text-decoration: none;
+  }
+  .nav-item.active { color: #c1a778; }
+  .nav-icon { font-size: 20px; }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span class="time">7:41</span>
+  <div style="display:flex;gap:6px;align-items:center">
+    <span style="font-size:11px">📶</span>
+    <span style="font-size:11px">🔋</span>
+  </div>
+</div>
+
+<div class="top-bar">
+  <div class="back-btn">
+    <span class="arrow">‹</span>
+    <span>Report</span>
+  </div>
+  <div class="top-title">Special Action</div>
+  <div class="turn-badge">Turn 47 · Slot 2</div>
+</div>
+
+<div class="content">
+
+  <!-- Result header -->
+  <div class="result-header">
+    <div class="result-icon-ring partial-success">🏔️</div>
+    <div class="result-verdict">Partial Success</div>
+    <div class="result-subtitle">The mountain reveals its secrets — but at a cost</div>
+  </div>
+
+  <!-- Outcome meter -->
+  <div class="outcome-meter">
+    <div class="meter-bar-container">
+      <div class="meter-labels">
+        <span>Failure</span>
+        <span>Mixed</span>
+        <span>Success</span>
+      </div>
+      <div class="meter-bar">
+        <div class="meter-fill"></div>
+        <div class="meter-marker"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Your action recap -->
+  <div class="action-recap">
+    <div class="action-recap-label">Your Action</div>
+    <div class="action-recap-text">
+      "Send a small expedition of 4 scouts along the ancient waymarkers… carry enough provisions for 5 days… if the trail leads to an inhabited valley, make peaceful contact — bring copper ingots as a gift…"
+    </div>
+  </div>
+
+  <!-- Narrative result -->
+  <div class="section">
+    <div class="section-label">What Happened</div>
+
+    <p class="narrative-block">
+      Your scouts followed the carved waymarkers up through the <em>Grey Pass</em>, tracing symbols that grew older and stranger with each mile. On the third day, the trail descended into a narrow valley thick with ancient oaks — trees untouched by any axe.
+    </p>
+
+    <p class="narrative-block">
+      They found a <strong>small settlement of perhaps forty souls</strong> — a reclusive people who call themselves the <em>Ashenborn</em>. They speak an older dialect but could be understood. The copper ingots were received with interest, but the Ashenborn elder grew <span class="highlight">suspicious when she noticed iron buckles</span> on your scouts' boots. To them, iron is <em>"the cursed metal."</em>
+    </p>
+
+    <p class="narrative-block">
+      Two scouts were permitted to stay as guests. The other two were sent back with a message: <strong>"Bring no iron to this valley, and we may speak further."</strong>
+    </p>
+  </div>
+
+  <!-- Consequences -->
+  <div class="section">
+    <div class="section-label">Consequences</div>
+
+    <!-- Discovery -->
+    <div class="discovery-card">
+      <div class="consequence-header">
+        <div class="consequence-icon discovery">🔮</div>
+        <div>
+          <div class="discovery-title">New Faction Discovered</div>
+          <div class="consequence-detail">Major discovery · Unique faction</div>
+        </div>
+      </div>
+      <div class="discovery-body">
+        The <em>Ashenborn</em> — a reclusive valley people with <strong>copper-age technology</strong> and knowledge of ancient herbcraft. They revere the mountain and forbid iron. Population ~40. Location: <strong>Hex 3346 (Hidden Valley)</strong>.
+      </div>
+      <span class="tag discovery">Faction Unlocked</span>
+    </div>
+
+    <!-- Map reveal -->
+    <div class="consequence-card">
+      <div class="consequence-header">
+        <div class="consequence-icon info">🗺️</div>
+        <div>
+          <div class="consequence-title">3 New Hexes Revealed</div>
+          <div class="consequence-detail">Map update</div>
+        </div>
+      </div>
+      <div class="consequence-body">
+        Hexes <strong>3245, 3345, 3346</strong> now visible. Mountain pass, ancient forest, and hidden valley. Rich in timber and rare herbs.
+      </div>
+      <span class="tag info">Map Updated</span>
+    </div>
+
+    <!-- Resource cost -->
+    <div class="consequence-card">
+      <div class="consequence-header">
+        <div class="consequence-icon loss">📦</div>
+        <div>
+          <div class="consequence-title">Resources Spent</div>
+          <div class="consequence-detail">Expedition cost</div>
+        </div>
+      </div>
+      <div class="consequence-body">
+        <strong>-15 food</strong> (provisions) · <strong>-8 copper</strong> (gift ingots) · <strong>2 scouts unavailable</strong> for 2 turns (staying as guests in the valley).
+      </div>
+      <span class="tag loss">Resources Consumed</span>
+    </div>
+
+    <!-- Diplomatic -->
+    <div class="consequence-card">
+      <div class="consequence-header">
+        <div class="consequence-icon diplo">⚖️</div>
+        <div>
+          <div class="consequence-title">Ashenborn Relations: Cautious</div>
+          <div class="consequence-detail">New diplomatic contact</div>
+        </div>
+      </div>
+      <div class="consequence-body">
+        First contact successful but strained. They're interested in copper trade but deeply wary of iron. <strong>Future actions will determine</strong> whether this becomes an alliance or hostility.
+      </div>
+      <span class="tag pending">Requires Follow-Up</span>
+    </div>
+
+    <!-- Falcon outcome -->
+    <div class="consequence-card">
+      <div class="consequence-header">
+        <div class="consequence-icon gain">🦅</div>
+        <div>
+          <div class="consequence-title">Falcon Route Established</div>
+          <div class="consequence-detail">Ongoing benefit</div>
+        </div>
+      </div>
+      <div class="consequence-body">
+        Your falcon successfully tracked the route. You now have a <strong>reliable aerial path</strong> to the hidden valley — messages can be sent in ~6 hours via falcon.
+      </div>
+      <span class="tag gain">Permanent Benefit</span>
+    </div>
+  </div>
+
+  <!-- Factors breakdown -->
+  <div class="section">
+    <div class="section-label">Outcome Factors</div>
+    <div class="factors-box">
+      <div class="factor-row">
+        <div class="factor-name"><span class="emoji">🧭</span> Scouts experienced</div>
+        <div class="factor-value positive">+2</div>
+      </div>
+      <div class="factor-row">
+        <div class="factor-name"><span class="emoji">🪨</span> Copper gift (appropriate)</div>
+        <div class="factor-value positive">+2</div>
+      </div>
+      <div class="factor-row">
+        <div class="factor-name"><span class="emoji">🦅</span> Falcon backup plan</div>
+        <div class="factor-value positive">+1</div>
+      </div>
+      <div class="factor-row">
+        <div class="factor-name"><span class="emoji">📜</span> Waymarker guidance</div>
+        <div class="factor-value positive">+1</div>
+      </div>
+      <div class="factor-row">
+        <div class="factor-name"><span class="emoji">⚔️</span> Iron equipment (cultural taboo)</div>
+        <div class="factor-value negative">-3</div>
+      </div>
+      <div class="factor-row">
+        <div class="factor-name"><span class="emoji">🎲</span> Fortune roll</div>
+        <div class="factor-value neutral">+1</div>
+      </div>
+      <div class="factor-divider"></div>
+      <div class="factor-row">
+        <div class="factor-name" style="font-weight:600;color:#e8e0d4">Final score</div>
+        <div class="factor-value factor-total" style="color:#c8a03c">+4 (Partial Success)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Follow-up prompt -->
+  <div class="followup-box">
+    <div class="followup-label">
+      <span>💡</span>
+      <span>Follow-Up Opportunity</span>
+    </div>
+    <div class="followup-text">
+      Your two scouts in the valley could learn Ashenborn herbcraft — knowledge your clan lacks. You could use a <strong>special action next turn</strong> to instruct them, or send a return envoy with only copper and leather equipment (no iron).
+    </div>
+    <div class="followup-actions">
+      <button class="followup-btn primary">Plan Next Action</button>
+      <button class="followup-btn secondary">Back to Report</button>
+    </div>
+  </div>
+
+  <div style="height: 80px;"></div>
+</div>
+
+<!-- Bottom nav -->
+<div class="bottom-nav">
+  <a class="nav-item active" href="#">
+    <span class="nav-icon">📜</span>
+    <span>Report</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">🗺️</span>
+    <span>Map</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">⚙️</span>
+    <span>Orders</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">🏰</span>
+    <span>Clan</span>
+  </a>
+  <a class="nav-item" href="#">
+    <span class="nav-icon">💬</span>
+    <span>Messages</span>
+  </a>
+</div>
+
+</body>
+</html>

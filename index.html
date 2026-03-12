@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ironlands — Mobile Mockups</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d0f14;
+    color: #e8e0d4;
+    font-family: 'Inter', sans-serif;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 32px;
+    text-align: center;
+    color: #c1a778;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #7a7468;
+    margin-bottom: 40px;
+    font-size: 14px;
+  }
+
+  .intro {
+    max-width: 800px;
+    margin: 0 auto 50px;
+    text-align: center;
+    font-family: 'EB Garamond', serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #b8b0a2;
+  }
+  .intro p {
+    margin-bottom: 16px;
+  }
+  .intro strong {
+    color: #c1a778;
+    font-weight: 600;
+  }
+
+  .screens {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+  }
+
+  .screen-container {
+    text-align: center;
+  }
+  .screen-label {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #c1a778;
+    margin-bottom: 12px;
+  }
+  .phone-frame {
+    width: 390px;
+    height: 844px;
+    border-radius: 40px;
+    border: 3px solid #2a2a2a;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    background: #0a0c10;
+  }
+  .phone-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+</style>
+</head>
+<body>
+  <h1>IRONLANDS</h1>
+  <p class="subtitle">A Modern AI-Driven Turn-Based Strategy Game</p>
+
+  <div class="intro">
+    <p>An open-ended multiplayer 4X game set in a richly populated world. Factions wage war and forge alliances. Cities rise and fall. Economies fluctuate. You lead a wandering tribe through this landscape—exploring, trading, fighting, and navigating the politics of a living world.</p>
+
+    <p>The design emphasises roleplaying over resource management. Your tribe is defined by nine numbers (people, food, materials, tools, weapons, trade goods, livestock, mounts, coin). The depth comes from <strong>special actions</strong>: freeform commands you type in plain English. "Send scouts to negotiate with the Iron Wolves." "Ambush the caravan at dawn." A Game Master interprets your intent and resolves outcomes. One turn per day.</p>
+  </div>
+
+  <div class="screens">
+    <div class="screen-container">
+      <div class="screen-label">TURN RESULTS</div>
+      <div class="phone-frame">
+        <iframe src="screen23-turn-results.html"></iframe>
+      </div>
+    </div>
+    <div class="screen-container">
+      <div class="screen-label">TURN ENTRY</div>
+      <div class="phone-frame">
+        <iframe src="screen20-turn-entry-dark.html"></iframe>
+      </div>
+    </div>
+    <div class="screen-container">
+      <div class="screen-label">MAP VIEW</div>
+      <div class="phone-frame">
+        <iframe src="screen2-map-view.html"></iframe>
+      </div>
+    </div>
+    <div class="screen-container">
+      <div class="screen-label">CITY / TRADE</div>
+      <div class="phone-frame">
+        <iframe src="screen22-city-trade.html"></iframe>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

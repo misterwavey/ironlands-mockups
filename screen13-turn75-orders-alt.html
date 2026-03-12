@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1.0">
+<title>Ironlands — Turn 75 Orders (Alt)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 390px;
+    min-height: 844px;
+    background: #f4ede0;
+    color: #2a2520;
+    font-family: 'Crimson Text', Georgia, serif;
+    font-size: 16px;
+    line-height: 1.55;
+    overflow-x: hidden;
+    /* subtle paper texture */
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(180, 160, 120, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(160, 140, 100, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(140, 120, 80, 0.05) 0%, transparent 50%);
+  }
+
+  /* Status bar — light */
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 24px 8px; font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px; font-weight: 600; color: #8a7e6e;
+  }
+  .status-bar .time { font-size: 15px; color: #5a5040; }
+
+  /* Header — handwritten feel */
+  .header {
+    padding: 18px 24px 16px;
+    border-bottom: 2px solid #c4b8a0;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 24px;
+    right: 24px;
+    height: 1px;
+    background: rgba(196, 184, 160, 0.4);
+  }
+  .turn-label {
+    font-family: 'Caveat', cursive;
+    font-size: 32px;
+    font-weight: 700;
+    color: #3a3228;
+    line-height: 1.1;
+  }
+  .turn-context {
+    font-family: 'Crimson Text', serif;
+    font-size: 14px;
+    color: #7a6e5e;
+    font-style: italic;
+    margin-top: 2px;
+  }
+  .deadline-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    padding: 4px 12px;
+    background: #e8d5b0;
+    border-radius: 20px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6a5a3a;
+  }
+
+  .content { padding: 18px 22px; }
+
+  /* Resources — ink stamp style */
+  .resource-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  .resource-stamp {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid #d4c8b0;
+    border-radius: 6px;
+  }
+  .resource-stamp .emoji { font-size: 14px; }
+  .resource-stamp .num {
+    font-family: 'Caveat', cursive;
+    font-size: 20px;
+    font-weight: 700;
+    color: #3a3228;
+    line-height: 1;
+  }
+  .resource-stamp .num.warn { color: #a05020; }
+  .resource-stamp .lbl {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #8a7e6e;
+  }
+
+  /* Section */
+  .section { margin-bottom: 22px; }
+  .section-title {
+    font-family: 'Caveat', cursive;
+    font-size: 22px;
+    font-weight: 600;
+    color: #4a4030;
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+    border-bottom: 1px dashed #c4b8a0;
+  }
+
+  /* Allocation — tally marks style */
+  .alloc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .alloc-card {
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid #d4c8b0;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .alloc-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: var(--pct, 50%);
+    height: 100%;
+    border-radius: 10px 0 0 10px;
+    z-index: 0;
+  }
+  .alloc-card.gather::before { background: rgba(90, 140, 60, 0.08); }
+  .alloc-card.craft::before { background: rgba(180, 140, 40, 0.08); }
+  .alloc-card.scout::before { background: rgba(50, 100, 150, 0.08); }
+  .alloc-card.warrior::before { background: rgba(160, 50, 40, 0.08); }
+
+  .alloc-card > * { position: relative; z-index: 1; }
+  .alloc-emoji { font-size: 22px; margin-bottom: 4px; }
+  .alloc-name {
+    font-family: 'Caveat', cursive;
+    font-size: 18px;
+    font-weight: 600;
+    color: #3a3228;
+  }
+  .alloc-count {
+    font-family: 'Caveat', cursive;
+    font-size: 28px;
+    font-weight: 700;
+    color: #3a3228;
+    line-height: 1;
+  }
+  .alloc-pct {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 11px;
+    color: #8a7e6e;
+  }
+  .alloc-note {
+    font-family: 'Crimson Text', serif;
+    font-size: 12px;
+    font-style: italic;
+    color: #7a6e5e;
+    margin-top: 4px;
+  }
+
+  /* Projection — notebook lined */
+  .projection-box {
+    background:
+      repeating-linear-gradient(
+        transparent,
+        transparent 27px,
+        #d4c8b0 27px,
+        #d4c8b0 28px
+      );
+    border: 1px solid #c4b8a0;
+    border-radius: 8px;
+    padding: 10px 14px 14px;
+    margin-bottom: 20px;
+    min-height: 170px;
+  }
+  .projection-title {
+    font-family: 'Caveat', cursive;
+    font-size: 16px;
+    font-weight: 600;
+    color: #6a5a3a;
+    margin-bottom: 6px;
+  }
+  .proj-line {
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    color: #3a3228;
+    line-height: 28px;
+    /* sits on the ruled lines */
+  }
+  .proj-line .good { color: #4a7a2a; }
+  .proj-line .bad { color: #a05020; }
+  .proj-line .note { color: #3a6a9a; }
+
+  /* Movement — map sketch style */
+  .movement-box {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid #c4b8a0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .route-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dotted #d4c8b0;
+  }
+  .route-row:last-child { border: none; }
+  .route-marker {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #c4b8a0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .route-marker.selected {
+    border-color: #4a7a2a;
+    background: #4a7a2a;
+  }
+  .route-marker.selected::after {
+    content: '✓';
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .route-text {
+    font-family: 'Caveat', cursive;
+    font-size: 17px;
+    color: #3a3228;
+    line-height: 1.3;
+  }
+  .route-sub {
+    font-family: 'Crimson Text', serif;
+    font-size: 13px;
+    color: #7a6e5e;
+    font-style: italic;
+  }
+
+  /* Trade — receipt style */
+  .trade-receipt {
+    background: #fff;
+    border: 1px dashed #c4b8a0;
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-family: 'Source Sans 3', sans-serif;
+  }
+  .receipt-header {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #6a5a3a;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #d4c8b0;
+    margin-bottom: 8px;
+  }
+  .receipt-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+    color: #4a4030;
+  }
+  .receipt-line.total {
+    border-top: 1px solid #c4b8a0;
+    margin-top: 6px;
+    padding-top: 8px;
+    font-weight: 700;
+  }
+  .receipt-positive { color: #4a7a2a; font-weight: 600; }
+  .receipt-negative { color: #a05020; font-weight: 600; }
+
+  /* Special actions — torn note style */
+  .note-card {
+    background: #fffef5;
+    border: 1px solid #d4c8a0;
+    border-radius: 2px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: 2px 3px 8px rgba(0,0,0,0.06);
+    transform: rotate(-0.3deg);
+    position: relative;
+  }
+  .note-card:nth-child(even) { transform: rotate(0.2deg); }
+  .note-card::before {
+    content: '📌';
+    position: absolute;
+    top: -6px;
+    right: 12px;
+    font-size: 16px;
+  }
+  .note-label {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #8a6a8a;
+    margin-bottom: 6px;
+  }
+  .note-text {
+    font-family: 'Caveat', cursive;
+    font-size: 18px;
+    line-height: 1.45;
+    color: #2a2520;
+  }
+
+  /* Submit — wax seal feel */
+  .submit-section { padding: 10px 0 100px; text-align: center; }
+  .submit-btn {
+    width: 100%;
+    padding: 18px;
+    border-radius: 8px;
+    border: 2px solid #8a6830;
+    background: linear-gradient(135deg, #c4a050, #a08030);
+    color: #fff;
+    font-family: 'Caveat', cursive;
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(140, 100, 30, 0.25);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    letter-spacing: 1px;
+  }
+  .submit-note {
+    font-family: 'Crimson Text', serif;
+    font-size: 13px;
+    font-style: italic;
+    color: #8a7e6e;
+    margin-top: 8px;
+  }
+
+  /* Bottom nav — warm */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; width: 390px;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 10px 0 28px;
+    background: linear-gradient(to top, #f4ede0 60%, transparent);
+    border-top: 1px solid #d4c8b0;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 10px; color: #a09888; text-decoration: none;
+  }
+  .nav-item.active { color: #6a5a3a; }
+  .nav-icon { font-size: 20px; }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span class="time">8:14</span>
+  <div style="display:flex;gap:6px;align-items:center"><span style="font-size:11px">📶</span><span style="font-size:11px">🔋</span></div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="turn-label">Turn 75 — Orders</div>
+  <div class="turn-context">Harrowgate · Cairnfall convoy departing · Winter in 5 turns</div>
+  <div class="deadline-pill">⏰ 11h 46m until orders lock</div>
+</div>
+
+<div class="content">
+
+  <!-- Resources -->
+  <div class="resource-row">
+    <div class="resource-stamp"><span class="emoji">👥</span><div><div class="num">299</div><div class="lbl">People</div></div></div>
+    <div class="resource-stamp"><span class="emoji">🍖</span><div><div class="num warn">178</div><div class="lbl">Food</div></div></div>
+    <div class="resource-stamp"><span class="emoji">⚒️</span><div><div class="num">134</div><div class="lbl">Matl</div></div></div>
+    <div class="resource-stamp"><span class="emoji">🔧</span><div><div class="num">58</div><div class="lbl">Tools</div></div></div>
+    <div class="resource-stamp"><span class="emoji">⚔️</span><div><div class="num">41</div><div class="lbl">Wpns</div></div></div>
+    <div class="resource-stamp"><span class="emoji">💎</span><div><div class="num">17</div><div class="lbl">Trade</div></div></div>
+    <div class="resource-stamp"><span class="emoji">🐄</span><div><div class="num">22</div><div class="lbl">Live</div></div></div>
+    <div class="resource-stamp"><span class="emoji">🐎</span><div><div class="num">8</div><div class="lbl">Mount</div></div></div>
+  </div>
+
+  <!-- Allocation -->
+  <div class="section">
+    <div class="section-title">People</div>
+    <div class="alloc-grid">
+      <div class="alloc-card gather" style="--pct: 45%;">
+        <div class="alloc-emoji">🏹</div>
+        <div class="alloc-name">Gatherers</div>
+        <div class="alloc-count">135</div>
+        <div class="alloc-pct">45%</div>
+        <div class="alloc-note">feed us on the road</div>
+      </div>
+      <div class="alloc-card craft" style="--pct: 20%;">
+        <div class="alloc-emoji">⚒️</div>
+        <div class="alloc-name">Crafters</div>
+        <div class="alloc-count">60</div>
+        <div class="alloc-pct">20%</div>
+        <div class="alloc-note">weapons focus — Gareth leading</div>
+      </div>
+      <div class="alloc-card scout" style="--pct: 15%;">
+        <div class="alloc-emoji">🧭</div>
+        <div class="alloc-name">Scouts</div>
+        <div class="alloc-count">45</div>
+        <div class="alloc-pct">15%</div>
+        <div class="alloc-note">8 mounted · 2× range</div>
+      </div>
+      <div class="alloc-card warrior" style="--pct: 20%;">
+        <div class="alloc-emoji">⚔️</div>
+        <div class="alloc-name">Warriors</div>
+        <div class="alloc-count">59</div>
+        <div class="alloc-pct">20%</div>
+        <div class="alloc-note">41 armed · 18 unarmed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Projection -->
+  <div class="section">
+    <div class="section-title">If we march east...</div>
+    <div class="projection-box">
+      <div class="proj-line">👥 <span class="good">+3 people</span> (births) → 302</div>
+      <div class="proj-line">🍖 <span class="bad">+81 gathered, -299 eaten</span> → ~10 food</div>
+      <div class="proj-line">⚒️ +18 materials → 152</div>
+      <div class="proj-line">⚔️ <span class="good">+4 weapons crafted</span> → 45</div>
+      <div class="proj-line">🧭 <span class="note">4 hexes scouted</span> (mounted range)</div>
+      <div class="proj-line">🛡️ 59 warriors, str <span class="good">100</span> (41 armed)</div>
+    </div>
+  </div>
+
+  <!-- Movement -->
+  <div class="section">
+    <div class="section-title">Which road?</div>
+    <div class="movement-box">
+      <div class="route-row">
+        <div class="route-marker selected"></div>
+        <div>
+          <div class="route-text">Straight east — grassland</div>
+          <div class="route-sub">1 turn to Cairnfall at convoy speed. Open, exposed. Drenn scouts reported. Poor foraging.</div>
+        </div>
+      </div>
+      <div class="route-row">
+        <div class="route-marker"></div>
+        <div>
+          <div class="route-text">Southern loop — through the forest</div>
+          <div class="route-sub">2 turns via treeline. Better cover, better foraging. Avoids known Drenn tracks.</div>
+        </div>
+      </div>
+      <div class="route-row">
+        <div class="route-marker"></div>
+        <div>
+          <div class="route-text">Stay one more day</div>
+          <div class="route-sub">Stockpile, trade, prepare. Contract deadline gets tighter.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trade -->
+  <div class="section">
+    <div class="section-title">Last trade before we go</div>
+    <div class="trade-receipt">
+      <div class="receipt-header">Harrowgate Market</div>
+      <div class="receipt-line">
+        <span>Sell 10 trade goods</span>
+        <span class="receipt-positive">+ 110 food</span>
+      </div>
+      <div class="receipt-line">
+        <span>Buy 3 weapons</span>
+        <span class="receipt-negative">- 60 materials</span>
+      </div>
+      <div class="receipt-line total">
+        <span>After trade:</span>
+        <span>288 food · 44 wpn · 74 matl</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Special Actions -->
+  <div class="section">
+    <div class="section-title">Special orders</div>
+
+    <div class="note-card">
+      <div class="note-label">✨ Special Action 1</div>
+      <div class="note-text">Have Gareth the blacksmith lead a focused weapons push — assign him the best materials and 4 other crafters. We need every warrior armed before we hit the grassland. Prioritise spears.</div>
+    </div>
+
+    <div class="note-card">
+      <div class="note-label">✨ Special Action 2</div>
+      <div class="note-text">Send 4 mounted scouts ahead on the direct route to Cairnfall. Ride fast, stay on the ridgeline, report by nightfall: fresh Drenn tracks? Any sign of the main warband? If clear, we march at dawn. If not, we take the forest.</div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-section">
+    <button class="submit-btn">Send Orders ✦</button>
+    <div class="submit-note">Orders lock at 8:00 PM · you can change your mind until then</div>
+  </div>
+
+</div>
+
+<div class="bottom-nav">
+  <a class="nav-item" href="#"><span class="nav-icon">📜</span><span>Report</span></a>
+  <a class="nav-item" href="#"><span class="nav-icon">🗺️</span><span>Map</span></a>
+  <a class="nav-item" href="#"><span class="nav-icon">👥</span><span>Tribe</span></a>
+  <a class="nav-item active" href="#"><span class="nav-icon">⚙️</span><span>Orders</span></a>
+  <a class="nav-item" href="#"><span class="nav-icon">💬</span><span>Messages</span></a>
+</div>
+
+</body>
+</html>

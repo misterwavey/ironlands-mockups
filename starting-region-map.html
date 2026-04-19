@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orphan Shores — Starting Region</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #1a1a2e; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; }
+#controls { padding: 10px 20px; background: #16213e; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+#controls h1 { font-size: 18px; color: #e94560; margin-right: 20px; }
+#controls label { font-size: 12px; display: flex; align-items: center; gap: 5px; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.legend-swatch { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #444; }
+canvas { display: block; cursor: crosshair; }
+#tooltip {
+  position: fixed; background: #0f3460; border: 1px solid #e94560; padding: 8px 12px;
+  border-radius: 6px; font-size: 12px; pointer-events: none; display: none; max-width: 300px;
+  z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+#tooltip h3 { color: #e94560; margin-bottom: 4px; font-size: 13px; }
+#tooltip p { margin: 2px 0; }
+#tooltip .zone { color: #53d8fb; }
+</style>
+</head>
+<body>
+<div id="controls">
+  <h1>Orphan Shores — Starting Region (50×50)</h1>
+  <div class="legend-item"><div class="legend-swatch" style="background:#2d5a27"></div> Forest</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#6b7b3a"></div> Plains</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#8b7355"></div> Hills</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#6e6e6e"></div> Mountains</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#c4a55a"></div> Arid/Scrub</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#3a7ca5"></div> Water</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#2a6496"></div> Strait</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#4a8c3f"></div> Farmland</div>
+  <div class="legend-item"><div class="legend-swatch" style="background:#357a5a"></div> Marsh</div>
+  <div class="legend-item"><span style="color:#fff;font-weight:bold">●</span> Settlement</div>
+  <div class="legend-item"><span style="color:#4af">〰</span> River</div>
+</div>
+<canvas id="map"></canvas>
+<div id="tooltip"></div>
+
+<script>
+// Hex constants — flat-top hexagons
+const HEX_SIZE = 14; // radius
+const SQRT3 = Math.sqrt(3);
+const COLS = 50, ROWS = 50;
+
+// Zone definitions — each zone is a function returning { landform, cover, color }
+// Landforms: plains, hills, mountains, plateau, water
+// Cover: forest, woodland, grassland, scrub, farmland, marsh, bare, water
+
+function noise(x, y) {
+  // Simple hash-based pseudo-random
+  let n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+  return n - Math.floor(n);
+}
+
+function smoothNoise(x, y, scale) {
+  const sx = x / scale, sy = y / scale;
+  const ix = Math.floor(sx), iy = Math.floor(sy);
+  const fx = sx - ix, fy = sy - iy;
+  const a = noise(ix, iy), b = noise(ix+1, iy);
+  const c = noise(ix, iy+1), d = noise(ix+1, iy+1);
+  const u = fx*fx*(3-2*fx), v = fy*fy*(3-2*fy);
+  return a*(1-u)*(1-v) + b*u*(1-v) + c*(1-u)*v + d*u*v;
+}
+
+function fbm(x, y) {
+  return smoothNoise(x, y, 12) * 0.5 + smoothNoise(x, y, 6) * 0.3 + smoothNoise(x, y, 3) * 0.2;
+}
+
+// Strait path — organic, winding, roughly at row 17-23
+function straitRow(col) {
+  // Base at row 19, with organic variance
+  const base = 19;
+  const wave1 = Math.sin(col * 0.15) * 2.5;
+  const wave2 = Math.sin(col * 0.08 + 1.5) * 1.8;
+  const wave3 = Math.sin(col * 0.3 + 0.7) * 0.8;
+  return base + wave1 + wave2 + wave3;
+}
+
+function straitWidth(col) {
+  // Width varies from 1 to 6
+  const base = 3;
+  const narrows = col > 32 && col < 38 ? -2 + Math.sin((col - 32) * 0.5) * 0.5 : 0;
+  const wide = col > 8 && col < 14 ? 2.5 + Math.sin((col - 8) * 0.4) : 0;
+  const n = noise(col * 7.7, 99) * 1.5 - 0.75;
+  return Math.max(1, Math.min(6, Math.round(base + narrows + wide + n)));
+}
+
+function isStrait(col, row) {
+  if (col < 0 || col >= COLS) return false;
+  const center = straitRow(col);
+  const width = straitWidth(col);
+  const halfW = width / 2;
+  return row >= center - halfW - 0.5 && row <= center + halfW + 0.5;
+}
+
+function isBay(col, row) {
+  // Eastern bay — opens from col 40+
+  if (col < 39) return false;
+  const bayCenter = straitRow(45);
+  const dist = Math.abs(row - bayCenter);
+  const width = (col - 38) * 1.2;
+  return dist < width && col >= 40;
+}
+
+// Zone assignment
+function getZone(col, row) {
+  const n = fbm(col + 0.5, row + 0.5);
+  
+  // Water first
+  if (isStrait(col, row) || isBay(col, row)) return 'strait';
+  
+  // River — major river from south, entering strait around col 20
+  const riverCol = 20 + Math.sin(row * 0.15) * 1.5;
+  const riverDist = Math.abs(col - riverCol);
+  if (riverDist < 0.8 && row > straitRow(col) + 2) return 'river';
+  // Tributary 1 — from mountains
+  const trib1Col = 18 + (25 - row) * 0.15 + Math.sin(row * 0.3) * 0.5;
+  if (Math.abs(col - trib1Col) < 0.6 && row < 12 && row > 4) return 'river';
+  // Tributary 2 — from SW
+  const trib2Col = 22 + (35 - row) * 0.2 + Math.sin(row * 0.2) * 0.7;
+  if (Math.abs(col - trib2Col) < 0.6 && row > 28 && row < 40) return 'river';
+
+  const straitR = straitRow(col);
+  const isNorth = row < straitR - straitWidth(col)/2 - 1;
+  const isSouth = row > straitR + straitWidth(col)/2 + 1;
+  
+  // NW — Old Forest (cols 0-12, rows 0-14)
+  if (col < 14 && row < 15 && isNorth) {
+    if (n > 0.35) return 'dense_forest';
+    return 'forest';
+  }
+  
+  // N Mountains (cols 8-32, rows 0-8)
+  if (row < 9 && col > 6 && col < 34 && isNorth) {
+    if (n > 0.55) return 'mountain';
+    if (n > 0.35) return 'mountain_hill';
+    return 'hill';
+  }
+  
+  // NE Iron Hills (cols 35-49, rows 0-12)
+  if (col > 33 && row < 13 && isNorth) {
+    if (n > 0.5) return 'iron_hill';
+    return 'hill_grass';
+  }
+  
+  // N Highland — between mountains and coast
+  if (isNorth && row >= 9 && row < straitR - 3) {
+    if (n > 0.55) return 'woodland';
+    return 'grassland';
+  }
+  
+  // SW Plains
+  if (col < 16 && row > 28 && isSouth) {
+    return n > 0.6 ? 'woodland' : 'plains';
+  }
+  
+  // S Lowlands (cols 12-30, rows 22-38)
+  if (col > 10 && col < 32 && row > straitR + 2 && row < 42 && isSouth) {
+    if (n > 0.5) return 'farmland';
+    if (n > 0.35) return 'farmland_light';
+    return 'lowland_grass';
+  }
+  
+  // SE — Sheen Lands / Arid
+  if (col > 32 && row > straitR + 3 && isSouth) {
+    if (n > 0.6) return 'scrub';
+    return 'arid';
+  }
+  
+  // South coastal strip
+  if (isSouth && row < straitR + straitWidth(col)/2 + 4) {
+    return n > 0.5 ? 'marsh' : 'grassland';
+  }
+  
+  // Default
+  return n > 0.5 ? 'woodland' : 'grassland';
+}
+
+const ZONE_COLORS = {
+  'strait': '#2a6496',
+  'river': '#4a9ac7',
+  'dense_forest': '#1e4a1a',
+  'forest': '#2d5a27',
+  'woodland': '#3d6b30',
+  'grassland': '#5a8a3a',
+  'plains': '#7a9a4a',
+  'hill': '#8b7b55',
+  'mountain_hill': '#7a7a65',
+  'mountain': '#6e6e6e',
+  'iron_hill': '#7a6e55',
+  'hill_grass': '#8a8a55',
+  'farmland': '#4a8c3f',
+  'farmland_light': '#5a9a4f',
+  'lowland_grass': '#6a9a45',
+  'marsh': '#357a5a',
+  'scrub': '#b4a55a',
+  'arid': '#c4a55a',
+};
+
+const ZONE_LABELS = {
+  'strait': 'Strait',
+  'river': 'River',
+  'dense_forest': 'Dense Forest',
+  'forest': 'Forest',
+  'woodland': 'Woodland',
+  'grassland': 'Grassland',
+  'plains': 'Open Plains',
+  'hill': 'Hills',
+  'mountain_hill': 'Foothills',
+  'mountain': 'Mountains',
+  'iron_hill': 'Iron Hills',
+  'hill_grass': 'Grassy Hills',
+  'farmland': 'Farmland',
+  'farmland_light': 'Light Farmland',
+  'lowland_grass': 'Lowland Grass',
+  'marsh': 'Coastal Marsh',
+  'scrub': 'Scrubland',
+  'arid': 'Arid Plateau',
+};
+
+// Settlements
+const settlements = [
+  // Cities
+  { name: 'TBD (South Port City)', col: 20, row: 22, size: 'city', desc: 'Largest settlement. River mouth + strait crossing. Trade hub.' },
+  { name: 'TBD (North Port)', col: 16, row: 13, size: 'city', desc: 'Northern faction main port. Sea access.' },
+  { name: 'TBD (Bay City)', col: 43, row: 20, size: 'city', desc: 'Eastern bay. Sheltered harbour.' },
+  
+  // Towns
+  { name: 'TBD (Pass Town)', col: 15, row: 6, size: 'town', desc: 'Mountain pass. Iron trade gateway.' },
+  { name: 'TBD (Ferry Town)', col: 28, row: 22, size: 'town', desc: 'South bank ferry crossing.' },
+  { name: 'TBD (Market Town)', col: 21, row: 32, size: 'town', desc: 'River crossing, farmland centre.' },
+  { name: 'TBD (Mining Town)', col: 40, row: 7, size: 'town', desc: 'Iron hills mining centre.' },
+  { name: 'TBD (Sheen Post)', col: 42, row: 35, size: 'town', desc: 'Sheen trading post. Indigenous.' },
+  
+  // Villages
+  { name: 'Fishing village', col: 8, row: 16, size: 'village', desc: 'Western cape fishing.' },
+  { name: 'Fishing village', col: 35, row: 15, size: 'village', desc: 'North bank fishing.' },
+  { name: 'Forest hamlet', col: 6, row: 10, size: 'village', desc: 'Forest edge. Timber, herbs.' },
+  { name: 'Farming village', col: 18, row: 28, size: 'village', desc: 'Lowland farms.' },
+  { name: 'Farming village', col: 25, row: 30, size: 'village', desc: 'Lowland farms.' },
+  { name: 'Mining hamlet', col: 22, row: 5, size: 'village', desc: 'Mountain iron mine.' },
+  { name: 'Mining hamlet', col: 30, row: 4, size: 'village', desc: 'Mountain quarry.' },
+  { name: 'Marsh village', col: 38, row: 23, size: 'village', desc: 'Coastal marsh. Salt, fish.' },
+  { name: 'South bank', col: 12, row: 21, size: 'village', desc: 'Western south bank settlement.' },
+  { name: 'Plains hamlet', col: 8, row: 32, size: 'village', desc: 'SW plains grazing.' },
+  { name: 'Island settlement', col: 22, row: 19, size: 'village', desc: 'Mid-strait island. Strategic.' },
+  { name: 'Narrows post', col: 35, row: 18, size: 'village', desc: 'The Narrows crossing point.' },
+  { name: 'East inlet', col: 47, row: 17, size: 'village', desc: 'Eastern bay inlet.' },
+];
+
+// Key features
+const features = [
+  { name: 'The Narrows', col: 35, row: 18, icon: '⚠', desc: 'Only 1-hex crossing. Extreme chokepoint.' },
+  { name: 'Iron Deposits', col: 38, row: 6, icon: '⛏', desc: 'Primary iron source.' },
+  { name: 'Iron Deposits', col: 20, row: 5, icon: '⛏', desc: 'Mountain iron.' },
+  { name: 'Sheen Deposits', col: 40, row: 34, icon: '💎', desc: 'Placer deposits in dry riverbeds.' },
+  { name: 'Sheen Deposits', col: 44, row: 37, icon: '💎', desc: 'Placer deposits.' },
+  { name: 'Mountain Pass', col: 15, row: 7, icon: '🏔', desc: 'Western pass through mountains.' },
+  { name: 'Mountain Pass', col: 30, row: 6, icon: '🏔', desc: 'Eastern pass through mountains.' },
+  { name: 'Island', col: 22, row: 19, icon: '🏝', desc: 'Mid-strait staging point.' },
+];
+
+// Hex math — flat-top
+function hexToPixel(col, row) {
+  const x = HEX_SIZE * 1.5 * col;
+  const y = HEX_SIZE * SQRT3 * (row + 0.5 * (col & 1));
+  return { x, y };
+}
+
+function drawHex(ctx, px, py, fillColor, strokeColor) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = Math.PI / 180 * (60 * i);
+    const hx = px + HEX_SIZE * Math.cos(angle);
+    const hy = py + HEX_SIZE * Math.sin(angle);
+    if (i === 0) ctx.moveTo(hx, hy);
+    else ctx.lineTo(hx, hy);
+  }
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+  ctx.strokeStyle = strokeColor || '#111';
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+}
+
+const canvas = document.getElementById('map');
+const ctx = canvas.getContext('2d');
+
+// Calculate canvas size
+const padding = 30;
+const { x: maxX, y: maxY } = hexToPixel(COLS - 1, ROWS - 1);
+canvas.width = maxX + HEX_SIZE + padding * 2;
+canvas.height = maxY + HEX_SIZE + padding * 2;
+
+function render() {
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw hexes
+  for (let col = 0; col < COLS; col++) {
+    for (let row = 0; row < ROWS; row++) {
+      const { x, y } = hexToPixel(col, row);
+      const px = x + padding, py = y + padding;
+      const zone = getZone(col, row);
+      const color = ZONE_COLORS[zone] || '#555';
+      const isWater = zone === 'strait' || zone === 'river';
+      drawHex(ctx, px, py, color, isWater ? '#1a4a70' : '#1a1a2e');
+    }
+  }
+  
+  // Draw rivers as lines over hexes
+  ctx.strokeStyle = '#4a9ac7';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  // Main river
+  ctx.beginPath();
+  for (let row = 40; row >= Math.ceil(straitRow(20)); row--) {
+    const rc = 20 + Math.sin(row * 0.15) * 1.5;
+    const { x, y } = hexToPixel(rc, row);
+    if (row === 40) ctx.moveTo(x + padding, y + padding);
+    else ctx.lineTo(x + padding, y + padding);
+  }
+  ctx.stroke();
+  
+  // Draw settlement markers
+  settlements.forEach(s => {
+    const { x, y } = hexToPixel(s.col, s.row);
+    const px = x + padding, py = y + padding;
+    
+    ctx.beginPath();
+    if (s.size === 'city') {
+      ctx.arc(px, py, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.strokeStyle = '#e94560';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else if (s.size === 'town') {
+      ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#ddd';
+      ctx.fill();
+      ctx.strokeStyle = '#e94560';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    } else {
+      ctx.arc(px, py, 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#bbb';
+      ctx.fill();
+    }
+  });
+  
+  // Draw feature markers
+  features.forEach(f => {
+    const { x, y } = hexToPixel(f.col, f.row);
+    const px = x + padding, py = y + padding;
+    ctx.font = '10px serif';
+    ctx.fillText(f.icon, px - 5, py + 12);
+  });
+  
+  // Draw coordinate labels
+  ctx.font = '8px monospace';
+  ctx.fillStyle = '#555';
+  for (let col = 0; col < COLS; col += 5) {
+    const { x, y } = hexToPixel(col, 0);
+    ctx.fillText(col, x + padding - 4, padding - 8);
+  }
+  for (let row = 0; row < ROWS; row += 5) {
+    const { x, y } = hexToPixel(0, row);
+    ctx.fillText(row, padding - 18, y + padding + 3);
+  }
+}
+
+render();
+
+// Tooltip on hover
+const tooltip = document.getElementById('tooltip');
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  
+  // Find closest hex
+  let closest = null, minDist = Infinity;
+  for (let col = 0; col < COLS; col++) {
+    for (let row = 0; row < ROWS; row++) {
+      const { x, y } = hexToPixel(col, row);
+      const px = x + padding, py = y + padding;
+      const d = Math.hypot(mx - px, my - py);
+      if (d < minDist && d < HEX_SIZE) {
+        minDist = d;
+        closest = { col, row };
+      }
+    }
+  }
+  
+  if (closest) {
+    const zone = getZone(closest.col, closest.row);
+    const zoneLabel = ZONE_LABELS[zone] || zone;
+    const straitW = straitWidth(closest.col);
+    
+    let html = `<h3>Hex (${closest.col}, ${closest.row})</h3>`;
+    html += `<p class="zone">${zoneLabel}</p>`;
+    
+    if (zone === 'strait') {
+      html += `<p>Strait width here: ${straitW} hex${straitW > 1 ? 'es' : ''}</p>`;
+    }
+    
+    // Check for settlement
+    const sett = settlements.find(s => s.col === closest.col && s.row === closest.row);
+    if (sett) {
+      html += `<p><strong>${sett.size.toUpperCase()}:</strong> ${sett.name}</p>`;
+      html += `<p>${sett.desc}</p>`;
+    }
+    
+    // Check for feature
+    const feat = features.find(f => f.col === closest.col && f.row === closest.row);
+    if (feat) {
+      html += `<p><strong>${feat.icon} ${feat.name}</strong></p>`;
+      html += `<p>${feat.desc}</p>`;
+    }
+    
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 15) + 'px';
+    tooltip.style.top = (e.clientY + 15) + 'px';
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  tooltip.style.display = 'none';
+});
+</script>
+</body>
+</html>

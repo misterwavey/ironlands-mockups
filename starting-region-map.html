@@ -114,10 +114,21 @@ function isBay(col, row) {
 }
 
 // Two-layer terrain: returns { landform, cover }
+function isIsland(col, row) {
+  // Mid-strait island at (22, 19) — radius ~1 hex
+  if (Math.abs(col - 22) <= 1 && Math.abs(row - 19) <= 1 && Math.hypot(col - 22, row - 19) < 1.5) return true;
+  // Small islets near col 38
+  if (col === 38 && (row === 18 || row === 19)) return true;
+  return false;
+}
+
 function getTerrain(col, row) {
   const n = fbm(col + 0.5, row + 0.5);
   
-  // Water first
+  // Water first (but islands override)
+  if (isIsland(col, row)) {
+    return { landform: 'hills', cover: 'grassland' };
+  }
   if (isStrait(col, row) || isBay(col, row)) {
     return { landform: 'water', cover: 'strait' };
   }
@@ -225,27 +236,27 @@ const COVER_LABELS = {
 
 // Settlements
 const settlements = [
-  { name: 'TBD (South Port City)', col: 20, row: 22, size: 'city', desc: 'Largest settlement. River mouth + strait crossing. Trade hub.' },
+  { name: 'TBD (South Port City)', col: 21, row: 22, size: 'city', desc: 'Largest settlement. River mouth + strait crossing. Trade hub.' },
   { name: 'TBD (North Port)', col: 16, row: 13, size: 'city', desc: 'Northern faction main port. Sea access.' },
-  { name: 'TBD (Bay City)', col: 43, row: 20, size: 'city', desc: 'Eastern bay. Sheltered harbour.' },
+  { name: 'TBD (Bay City)', col: 42, row: 13, size: 'city', desc: 'Eastern bay north shore. Sheltered harbour.' },
   { name: 'TBD (Pass Town)', col: 15, row: 6, size: 'town', desc: 'Mountain pass. Iron trade gateway.' },
   { name: 'TBD (Ferry Town)', col: 28, row: 22, size: 'town', desc: 'South bank ferry crossing.' },
   { name: 'TBD (Market Town)', col: 21, row: 32, size: 'town', desc: 'River crossing, farmland centre.' },
   { name: 'TBD (Mining Town)', col: 40, row: 7, size: 'town', desc: 'Iron hills mining centre.' },
   { name: 'TBD (Sheen Post)', col: 42, row: 35, size: 'town', desc: 'Sheen trading post. Indigenous.' },
   { name: 'Fishing village', col: 8, row: 16, size: 'village', desc: 'Western cape fishing.' },
-  { name: 'Fishing village', col: 35, row: 15, size: 'village', desc: 'North bank fishing.' },
+  { name: 'Fishing village', col: 35, row: 12, size: 'village', desc: 'North bank fishing.' },
   { name: 'Forest hamlet', col: 6, row: 10, size: 'village', desc: 'Forest edge. Timber, herbs.' },
-  { name: 'Farming village', col: 18, row: 28, size: 'village', desc: 'Lowland farms.' },
+  { name: 'Farming village', col: 20, row: 28, size: 'village', desc: 'Lowland farms.' },
   { name: 'Farming village', col: 25, row: 30, size: 'village', desc: 'Lowland farms.' },
-  { name: 'Mining hamlet', col: 22, row: 5, size: 'village', desc: 'Mountain iron mine.' },
+  { name: 'Mining hamlet', col: 23, row: 5, size: 'village', desc: 'Mountain iron mine.' },
   { name: 'Mining hamlet', col: 30, row: 4, size: 'village', desc: 'Mountain quarry.' },
   { name: 'Marsh village', col: 38, row: 23, size: 'village', desc: 'Coastal marsh. Salt, fish.' },
-  { name: 'South bank', col: 12, row: 21, size: 'village', desc: 'Western south bank settlement.' },
+  { name: 'South bank', col: 14, row: 24, size: 'village', desc: 'Western south bank settlement.' },
   { name: 'Plains hamlet', col: 8, row: 32, size: 'village', desc: 'SW plains grazing.' },
   { name: 'Island settlement', col: 22, row: 19, size: 'village', desc: 'Mid-strait island. Strategic.' },
   { name: 'Narrows post', col: 35, row: 18, size: 'village', desc: 'The Narrows crossing point.' },
-  { name: 'East inlet', col: 47, row: 17, size: 'village', desc: 'Eastern bay inlet.' },
+  { name: 'East inlet', col: 40, row: 23, size: 'village', desc: 'Eastern bay south shore.' },
 ];
 
 const features = [

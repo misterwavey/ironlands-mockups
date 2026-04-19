@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orphan Shores — mapgen2 Terrain</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #1a1a2e; color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; }
+#controls { padding: 10px 20px; background: #16213e; display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+#controls h1 { font-size: 18px; color: #e94560; margin-right: 20px; }
+#controls button { padding: 4px 12px; background: #e94560; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+#controls button:hover { background: #c73a52; }
+.legend-section { margin-right: 15px; }
+.legend-section h4 { font-size: 10px; color: #888; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
+.legend-item { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; margin-right: 8px; }
+.legend-swatch { width: 14px; height: 14px; border-radius: 2px; border: 1px solid #333; }
+canvas { display: block; cursor: crosshair; }
+#tooltip {
+  position: fixed; background: #0f3460; border: 1px solid #e94560; padding: 8px 12px;
+  border-radius: 6px; font-size: 11px; pointer-events: none; display: none; max-width: 300px;
+  z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+#tooltip h3 { color: #e94560; margin-bottom: 3px; font-size: 12px; }
+#tooltip p { margin: 1px 0; font-size: 11px; }
+#tooltip .landform { color: #ffb347; }
+#tooltip .cover { color: #53d8fb; }
+#tooltip .biome { color: #a5d6a7; }
+#tooltip .stat { color: #ccc; }
+</style>
+</head>
+<body>
+<div id="controls">
+  <h1>Orphan Shores — mapgen2 Terrain</h1>
+  <div class="legend-section">
+    <h4>Landform (colour)</h4>
+    <div class="legend-item"><div class="legend-swatch" style="background:#7a9a4a"></div>Plains</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#b8975a"></div>Hills</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#8a8a8a"></div>Mountains</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#c4a55a"></div>Plateau</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#2a6496"></div>Water</div>
+  </div>
+  <div class="legend-section">
+    <h4>Cover (symbol)</h4>
+    <div class="legend-item">🌲Forest</div>
+    <div class="legend-item">🌿Wood</div>
+    <div class="legend-item">·Grass</div>
+    <div class="legend-item">🌾Farm</div>
+    <div class="legend-item">≈Marsh</div>
+    <div class="legend-item">╳Bare</div>
+    <div class="legend-item">~Scrub</div>
+  </div>
+  <div class="legend-section">
+    <h4>Overlays</h4>
+    <div class="legend-item"><span style="color:#4af">〰</span>River</div>
+    <div class="legend-item"><span style="color:#fff;font-weight:bold">●</span>Settlement</div>
+  </div>
+  <button onclick="toggleElevation()">Toggle Elevation View</button>
+  <button onclick="toggleMoisture()">Toggle Moisture View</button>
+</div>
+<canvas id="map"></canvas>
+<div id="tooltip"></div>
+
+<script>
+const HEX_SIZE = 14;
+const SQRT3 = Math.sqrt(3);
+const COLS = 50, ROWS = 50;
+
+const LANDFORM_COLORS = {
+  'plains': '#7a9a4a', 'hills': '#b8975a', 'mountains': '#8a8a8a',
+  'plateau': '#c4a55a', 'water': '#2a6496',
+};
+const COVER_SYMBOLS = {
+  'forest': '🌲', 'woodland': '🌿', 'grassland': '·', 'farmland': '🌾',
+  'marsh': '≈', 'bare': '╳', 'scrub': '~', 'sea': '', 'lake': '',
+};
+
+let terrainData = null;
+let showElevation = false;
+let showMoisture = false;
+
+function hexToPixel(col, row) {
+  return {
+    x: HEX_SIZE * 1.5 * col,
+    y: HEX_SIZE * SQRT3 * (row + 0.5 * (col & 1))
+  };
+}
+
+function drawHex(ctx, px, py, fillColor, strokeColor) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = Math.PI / 180 * (60 * i);
+    const hx = px + HEX_SIZE * Math.cos(angle);
+    const hy = py + HEX_SIZE * Math.sin(angle);
+    i === 0 ? ctx.moveTo(hx, hy) : ctx.lineTo(hx, hy);
+  }
+  ctx.closePath();
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+  ctx.strokeStyle = strokeColor || '#1a1a2e';
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+}
+
+function elevColor(e) {
+  // Blue to green to brown to white
+  if (e < -0.1) return '#1a3a6a';
+  if (e < 0) return '#2a5a8a';
+  if (e < 0.1) return '#5a8a4a';
+  if (e < 0.3) return '#7a9a4a';
+  if (e < 0.5) return '#9a8a4a';
+  if (e < 0.7) return '#8a7a5a';
+  return '#aaa';
+}
+
+function moistColor(m) {
+  // Brown to green
+  const r = Math.round(180 - m * 100);
+  const g = Math.round(100 + m * 120);
+  const b = Math.round(50 + m * 30);
+  return `rgb(${r},${g},${b})`;
+}
+
+const canvas = document.getElementById('map');
+const ctx = canvas.getContext('2d');
+const padding = 30;
+
+async function loadAndRender() {
+  const resp = await fetch('terrain-data.json');
+  terrainData = await resp.json();
+  render();
+}
+
+function render() {
+  if (!terrainData) return;
+  const { hexes, rivers } = terrainData;
+  
+  const maxX = HEX_SIZE * 1.5 * (COLS - 1) + HEX_SIZE + padding * 2;
+  const maxY = HEX_SIZE * SQRT3 * (ROWS - 1) + HEX_SIZE + padding * 2;
+  canvas.width = maxX;
+  canvas.height = maxY;
+  
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Build lookup
+  const hexMap = {};
+  hexes.forEach(h => { hexMap[`${h.col},${h.row}`] = h; });
+  
+  // Draw hexes
+  for (const h of hexes) {
+    const { x, y } = hexToPixel(h.col, h.row);
+    const px = x + padding, py = y + padding;
+    
+    let fillColor;
+    if (showElevation) fillColor = elevColor(h.elevation);
+    else if (showMoisture) fillColor = moistColor(h.moisture);
+    else fillColor = LANDFORM_COLORS[h.landform] || '#555';
+    
+    const isWater = h.landform === 'water';
+    drawHex(ctx, px, py, fillColor, isWater ? '#1a4a70' : '#1a1a2e');
+    
+    // Cover symbol
+    if (!showElevation && !showMoisture) {
+      const sym = COVER_SYMBOLS[h.cover];
+      if (sym && sym.length === 1) {
+        ctx.font = '9px monospace';
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(sym, px, py);
+      } else if (sym && sym.length > 1) {
+        ctx.font = '8px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(sym, px, py);
+      }
+    }
+  }
+  
+  // Draw rivers
+  ctx.strokeStyle = '#4a9ac7';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  for (const river of rivers) {
+    ctx.beginPath();
+    river.forEach((p, i) => {
+      const { x, y } = hexToPixel(p.col, p.row);
+      i === 0 ? ctx.moveTo(x + padding, y + padding) : ctx.lineTo(x + padding, y + padding);
+    });
+    ctx.stroke();
+  }
+  
+  // Coordinate labels
+  ctx.font = '8px monospace';
+  ctx.fillStyle = '#555';
+  for (let c = 0; c < COLS; c += 5) {
+    const { x } = hexToPixel(c, 0);
+    ctx.fillText(c, x + padding - 4, padding - 8);
+  }
+  for (let r = 0; r < ROWS; r += 5) {
+    const { y } = hexToPixel(0, r);
+    ctx.fillText(r, padding - 18, y + padding + 3);
+  }
+}
+
+function toggleElevation() { showElevation = !showElevation; showMoisture = false; render(); }
+function toggleMoisture() { showMoisture = !showMoisture; showElevation = false; render(); }
+
+// Tooltip
+const tooltip = document.getElementById('tooltip');
+canvas.addEventListener('mousemove', e => {
+  if (!terrainData) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const { hexes } = terrainData;
+  
+  let closest = null, minDist = Infinity;
+  for (const h of hexes) {
+    const { x, y } = hexToPixel(h.col, h.row);
+    const d = Math.hypot(mx - (x + padding), my - (y + padding));
+    if (d < minDist && d < HEX_SIZE) { minDist = d; closest = h; }
+  }
+  
+  if (closest) {
+    let html = `<h3>Hex (${closest.col}, ${closest.row})</h3>`;
+    html += `<p class="landform">Landform: ${closest.landform}</p>`;
+    html += `<p class="cover">Cover: ${closest.cover}</p>`;
+    html += `<p class="biome">Biome: ${closest.biome}</p>`;
+    html += `<p class="stat">Elevation: ${closest.elevation} | Moisture: ${closest.moisture} | Temp: ${closest.temperature}</p>`;
+    if (closest.hasRiver) html += `<p style="color:#4af">〰 River</p>`;
+    tooltip.innerHTML = html;
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 15) + 'px';
+    tooltip.style.top = (e.clientY + 15) + 'px';
+  } else {
+    tooltip.style.display = 'none';
+  }
+});
+canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+loadAndRender();
+</script>
+</body>
+</html>

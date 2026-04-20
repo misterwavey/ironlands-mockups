@@ -105,12 +105,24 @@ function isStrait(col, row) {
   return row >= center - halfW - 0.5 && row <= center + halfW + 0.5;
 }
 
-function isBay(col, row) {
-  if (col < 39) return false;
-  const bayCenter = straitRow(45);
+// East: strait opens to open sea
+function isEastSea(col, row) {
+  if (col < 44) return false;
+  // Open sea — widens from strait into full ocean
+  const seaCenter = straitRow(49);
+  const dist = Math.abs(row - seaCenter);
+  const width = 4 + (col - 44) * 1.5;
+  return dist < width;
+}
+
+// West: sheltered bay
+function isWestBay(col, row) {
+  if (col > 9) return false;
+  const bayCenter = straitRow(0);
   const dist = Math.abs(row - bayCenter);
-  const width = (col - 38) * 1.2;
-  return dist < width && col >= 40;
+  // Narrows from strait into an enclosed bay
+  const width = Math.max(1, 3 - col * 0.3);
+  return dist < width + 0.5 && col <= 8;
 }
 
 // Two-layer terrain: returns { landform, cover }
@@ -129,8 +141,11 @@ function getTerrain(col, row) {
   if (isIsland(col, row)) {
     return { landform: 'hills', cover: 'grassland' };
   }
-  if (isStrait(col, row) || isBay(col, row)) {
+  if (isStrait(col, row) || isEastSea(col, row)) {
     return { landform: 'water', cover: 'strait' };
+  }
+  if (isWestBay(col, row)) {
+    return { landform: 'water', cover: 'bay' };
   }
   
   // River
@@ -221,6 +236,7 @@ const COVER_SYMBOLS = {
   'bare':      '╳',
   'scrub':     '~',
   'strait':    '',
+  'bay':       '',
   'river':     '',
 };
 
@@ -231,20 +247,20 @@ const LANDFORM_LABELS = {
 const COVER_LABELS = {
   'forest': 'Forest', 'woodland': 'Woodland', 'grassland': 'Grassland',
   'farmland': 'Farmland', 'marsh': 'Marsh', 'bare': 'Bare/Rock',
-  'scrub': 'Scrubland', 'strait': 'Strait', 'river': 'River',
+  'scrub': 'Scrubland', 'strait': 'Strait', 'river': 'River', 'bay': 'Bay',
 };
 
 // Settlements
 const settlements = [
   { name: 'TBD (South Port City)', col: 21, row: 22, size: 'city', desc: 'Largest settlement. River mouth + strait crossing. Trade hub.' },
   { name: 'TBD (North Port)', col: 16, row: 13, size: 'city', desc: 'Northern faction main port. Sea access.' },
-  { name: 'TBD (Bay City)', col: 42, row: 13, size: 'city', desc: 'Eastern bay north shore. Sheltered harbour.' },
+  { name: 'TBD (West Bay City)', col: 7, row: 17, size: 'city', desc: 'Western bay port. Sheltered harbour. Trade hub.' },
   { name: 'TBD (Pass Town)', col: 15, row: 6, size: 'town', desc: 'Mountain pass. Iron trade gateway.' },
   { name: 'TBD (Ferry Town)', col: 28, row: 22, size: 'town', desc: 'South bank ferry crossing.' },
   { name: 'TBD (Market Town)', col: 21, row: 32, size: 'town', desc: 'River crossing, farmland centre.' },
   { name: 'TBD (Mining Town)', col: 40, row: 7, size: 'town', desc: 'Iron hills mining centre.' },
   { name: 'TBD (Sheen Post)', col: 42, row: 35, size: 'town', desc: 'Sheen trading post. Indigenous.' },
-  { name: 'Fishing village', col: 8, row: 16, size: 'village', desc: 'Western cape fishing.' },
+  { name: 'Fishing village', col: 8, row: 16, size: 'village', desc: 'Western bay fishing.' },
   { name: 'Fishing village', col: 35, row: 12, size: 'village', desc: 'North bank fishing.' },
   { name: 'Forest hamlet', col: 6, row: 10, size: 'village', desc: 'Forest edge. Timber, herbs.' },
   { name: 'Farming village', col: 20, row: 28, size: 'village', desc: 'Lowland farms.' },
@@ -256,7 +272,7 @@ const settlements = [
   { name: 'Plains hamlet', col: 8, row: 32, size: 'village', desc: 'SW plains grazing.' },
   { name: 'Island settlement', col: 22, row: 19, size: 'village', desc: 'Mid-strait island. Strategic.' },
   { name: 'Narrows post', col: 35, row: 18, size: 'village', desc: 'The Narrows crossing point.' },
-  { name: 'East inlet', col: 40, row: 23, size: 'village', desc: 'Eastern bay south shore.' },
+  { name: 'East sea port', col: 43, row: 13, size: 'village', desc: 'Eastern sea port. Overlooks strait opening to open sea.' },
 ];
 
 const features = [
@@ -410,7 +426,7 @@ canvas.addEventListener('mousemove', e => {
     let html = `<h3>Hex (${closest.col}, ${closest.row})</h3>`;
     html += `<p class="landform">Landform: ${LANDFORM_LABELS[t.landform]}</p>`;
     html += `<p class="cover">Cover: ${COVER_LABELS[t.cover]}</p>`;
-    if (t.landform === 'water' && t.cover === 'strait') html += `<p>Strait width: ${sw} hex${sw > 1 ? 'es' : ''}</p>`;
+    if (t.landform === 'water' && (t.cover === 'strait' || t.cover === 'bay')) html += `<p>Water: ${t.cover}</p>`;
     const sett = settlements.find(s => s.col === closest.col && s.row === closest.row);
     if (sett) html += `<p><strong>${sett.size.toUpperCase()}:</strong> ${sett.name}</p><p>${sett.desc}</p>`;
     const feat = features.find(f => f.col === closest.col && f.row === closest.row);
